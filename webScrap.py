@@ -1,7 +1,3 @@
-#coger del csv el link y de ahi coger las caratulas
-
-#hacer una lista con la ultima columna del csv, recorrerla y entrar al link, y de ahi hacer scrap
-
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
@@ -16,7 +12,7 @@ archivo_salida = "link_imagenes.csv"
 
 with open(archivo_salida, mode='w', encoding='utf-8', newline='') as csvfile:
     # Definir los encabezados
-    fieldnames = ['title'] + ['link']
+    fieldnames = ['title'] + ['imagen']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')
     
     # Escribir encabezados
@@ -36,7 +32,7 @@ with open(archivo_salida, mode='w', encoding='utf-8', newline='') as csvfile:
             print(imagen)
             writer.writerow({
                 'title': titulo[i],
-                'link': link[i]
+                'imagen': imagen
             })
 
         except:
