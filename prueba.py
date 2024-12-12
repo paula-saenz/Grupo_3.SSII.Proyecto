@@ -6,7 +6,7 @@ def main():
     st.set_page_config(layout="wide") # Se configura para que ocupe todo el ancho de la web (incluye responsive)
     st.title("Recomendador Películas")
 
-    file_path = 'peliculas.csv' # Se guarda el CSV en una variable
+    file_path = 'peliculas_limpio.csv' # Se guarda el CSV en una variable
     data = pd.read_csv(file_path) # Se lee el CSV
 
     num_movies = 15 # Número de películas que aparecerán por pantalla
@@ -37,6 +37,6 @@ def main():
                 #añadir: Hacer un autocompletar para buscar películas
                 #añadir: ratio con el que se recomiendan las películas
 
-                
+
 if __name__ == "__main__":
     main()
