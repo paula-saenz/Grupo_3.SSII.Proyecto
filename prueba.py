@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+from streamlit_star_rating import st_star_rating
 
 def main():
     st.set_page_config(layout="wide") # Se configura para que ocupe todo el ancho de la web (incluye responsive)
@@ -8,10 +9,10 @@ def main():
     file_path = 'peliculas.csv' # Se guarda el CSV en una variable
     data = pd.read_csv(file_path) # Se lee el CSV
 
-    num_movies = 20 # Número de películas que aparecerán por pantalla
+    num_movies = 15 # Número de películas que aparecerán por pantalla
     random_movies = data.sample(n=num_movies) # Salen películas aleatorias
 
-    colums = 4 # Número de columnas
+    colums = 5 # Número de columnas
 
     grid = [random_movies.iloc[i:i+colums] for i in range(0, len(random_movies), colums)] # Formación del Grid para las películas
 
@@ -24,6 +25,8 @@ def main():
                 st.subheader(movie['title']) # Agarramos el título
                 st.write(f"Género: {movie['genre']}") # Agarramos el género
                 st.write(f"Año: {movie['year']}") # Agarramos el año
+                st_star_rating(label="", maxValue=5, defaultValue=0, key=f"rating_{movie['title']}") # Poner 5 estrellas debajo de cada película.
+                
 
                 #añadir: poder votar
                 #añadir: guardar votaciones en un csv que se cargue siempre que se inicie la app
