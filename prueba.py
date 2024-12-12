@@ -25,5 +25,15 @@ def main():
                 st.write(f"Género: {movie['genre']}") # Agarramos el género
                 st.write(f"Año: {movie['year']}") # Agarramos el año
 
+                #añadir: poder votar
+                #añadir: guardar votaciones en un csv que se cargue siempre que se inicie la app
+                #añadir: mostrar las películas recomendadas en función de las votaciones (pelis que no se hayan votado todavía)
+                #scrapper para coger caratulas de pelis
+                #añadir: poder escoger cuantas paelis aparecen en el recomendador
+                #añadir: poder tener un historial de las pelis que se han votado
+                #añadir: Hacer un autocompletar para buscar películas
+                #añadir: ratio con el que se recomiendan las películas
+
+                
 if __name__ == "__main__":
     main()
