@@ -12,35 +12,35 @@ df = pd.read_csv("peliculas_limpio.csv", header=None)
 titulo = df[1].tolist()
 link = df[25].tolist()
 
-diccionario = {}
+archivo_salida = "link_imagenes.csv"
 
-#recorrer la lista de links
-for i in range(1,4):    
-    #hacer scrap de la web
-    url = link[i]
-    page = requests.get(url)
-    soup = BeautifulSoup (page.content, 'html.parser')
-    #coger la imagen de la web
-    carpeta= soup.find("div", class_="media-scorecard no-border")
-    imagen= carpeta.find("rt-img").get("src")
-    diccionario[titulo[i]] = imagen
+with open(archivo_salida, mode='w', encoding='utf-8', newline='') as csvfile:
+    # Definir los encabezados
+    fieldnames = ['title'] + ['link']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')
     
-    print(titulo[i])
-    print(imagen)
-
-    with open("link_imagenes.csv", mode='w', encoding='utf-8', newline='') as csvfile:
-            # Definir los encabezados
-            fieldnames = ['Titulo'] + ['Link']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')
+    # Escribir encabezados
+    writer.writeheader()
+    #recorrer la lista de links
+    for i in range(1, len(link)):    
+        #hacer scrap de la web
+        url = link[i]
+        page = requests.get(url)
+        soup = BeautifulSoup (page.content, 'html.parser')
+        #coger la imagen de la web
+        try:
+            carpeta= soup.find("div", class_="media-scorecard no-border")
+            imagen= carpeta.find("rt-img").get("src")
             
-            # Escribir encabezados
-            writer.writeheader()
+            print(titulo[i])
+            print(imagen)
+            writer.writerow({
+                'title': titulo[i],
+                'link': link[i]
+            })
 
-            # Escribir los datos
-            for categoria, meses in categorias_por_mes.items():
-                row = {'Categoría': categoria}
-                row.update({f'Mes {i+1}': meses[i] for i in range(12)})
-                writer.writerow(row)
+        except:
+            print(f"La película {titulo[i]} no tiene imagen asociada" )
 
         print(f"Archivo '{archivo_salida}' creado con éxito.")
 
