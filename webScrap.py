@@ -3,12 +3,12 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 
-df = pd.read_csv("peliculas_limpio.csv", header=None)
+df = pd.read_csv("CSV/peliculas_limpio.csv", header=None)
 
 titulo = df[1].tolist()
 link = df[25].tolist()
 
-archivo_salida = "link_imagenes.csv"
+archivo_salida = "CSV/link_imagenes.csv"
 
 with open(archivo_salida, mode='w', encoding='utf-8', newline='') as csvfile:
     # Definir los encabezados

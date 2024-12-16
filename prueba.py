@@ -6,7 +6,7 @@ def main():
     st.set_page_config(layout="wide")  # Configuración de página
     st.title("Perfil de usuario")  # Título de la página    
 
-    file_path = 'peliculas_limpio.csv'  # Ruta al archivo CSV
+    file_path = 'CSV/peliculas_limpio.csv'  # Ruta al archivo CSV
     data = pd.read_csv(file_path)  # Cargar datos desde el CSV
 
     # Definir cuántas películas mostrar

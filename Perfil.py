@@ -6,7 +6,7 @@ def main():
     st.set_page_config(layout="wide") # Se configura para que ocupe todo el ancho de la web (incluye responsive)
     st.title("Recomendador Películas")
 
-    file_path = 'peliculas_limpio.csv' # Se guarda el CSV en una variable
+    file_path = 'CSV/peliculas_limpio.csv' # Se guarda el CSV en una variable
     data = pd.read_csv(file_path) # Se lee el CSV
 
     num_movies = st.sidebar.number_input("Número de películas a mostrar:", min_value=1, max_value=30, value=15)

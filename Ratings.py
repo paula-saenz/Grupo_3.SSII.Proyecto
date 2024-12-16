@@ -1,11 +1,11 @@
 import pandas as pd
 import csv
 
-df = pd.read_csv("peliculas_limpio.csv", header=None)
+df = pd.read_csv("CSV/peliculas_limpio.csv", header=None)
 
 titulo = df[1].tolist()
 
-with open("ratings.csv", mode='w', encoding='utf-8', newline='') as csvfile:
+with open("CSV/ratings.csv", mode='w', encoding='utf-8', newline='') as csvfile:
     # Definir los encabezados
     fieldnames = ['title'] + ['rating']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')
