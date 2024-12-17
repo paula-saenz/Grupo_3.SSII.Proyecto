@@ -47,7 +47,7 @@ def main():
                 
                 # Mostrar la imagen de la película si está disponible
                 if pd.notna(movie['imagen']):
-                    st.image(movie['image_link'], use_column_width=True)
+                    st.image(movie['imagen'], use_container_width=True)
                 else:
                     st.write("Imagen no disponible")
 
