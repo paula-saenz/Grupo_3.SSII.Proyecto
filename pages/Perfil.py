@@ -140,8 +140,14 @@ def main():
 
     save_ratings_to_csv()
 
-if __name__ == "__main__":
-    main()
+    st.sidebar.write("Pestañas: ")
+    st.sidebar.write("1. [Recomendador](Recomendador.py)")
+    st.sidebar.write("2. [Perfil](Perfil.py)")
+    st.sidebar.write("3. [Galeria](Galeria.py)")
+
+
+    if __name__ == "__main__":
+        main()
 
 
                 # HECHO
