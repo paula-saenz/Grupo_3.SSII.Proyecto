@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 from streamlit_star_rating import st_star_rating
+import os
 
 # Función para actualizar la lista de películas aleatorias
 def update_random_movies():
@@ -8,14 +9,29 @@ def update_random_movies():
 
 # Guardar calificaciones en un CSV
 def save_ratings_to_csv():
-    ratings = [
-        {"title": key.replace("rating_", ""), "rating": value}
-        for key, value in st.session_state.items()
-        if key.startswith("rating_")
-    ]
-    ratings_df = pd.DataFrame(ratings)
-    ratings_df.to_csv("user_ratings.csv", index=False)
-    st.sidebar.success("¡Calificaciones guardadas en 'user_ratings.csv'!")
+    # Leer el archivo ratings.csv
+    ratings_path = "CSV/ratings.csv"
+    if os.path.exists(ratings_path):
+        ratings_df = pd.read_csv(ratings_path)
+    else:
+        ratings_df = pd.DataFrame(columns=["title", "rating"])
+
+    # Actualizar las calificaciones en el archivo ratings.csv
+    for key, value in st.session_state.items():
+        if key.startswith("rating_"):
+            title = key.replace("rating_", "")
+            if title in ratings_df["title"].values:
+                # Modificar el rating de la película existente
+                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
+            else:
+                # Agregar una nueva entrada si no existe
+                ratings_df = pd.concat(
+                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
+                    ignore_index=True,
+                )
+
+    # Guardar el DataFrame actualizado
+    ratings_df.to_csv(ratings_path, index=False)
 
 def main():
     # Configuración de la página
@@ -23,14 +39,21 @@ def main():
     st.title("Perfil de usuario")
 
     # Cargar los datos desde CSV
-    file_path = 'CSV/peliculas_limpio.csv'
-    image_links_path = 'CSV/link_imagenes.csv'
+    file_path = "CSV/peliculas_limpio.csv"
+    image_links_path = "CSV/link_imagenes.csv"
+    ratings_path = "CSV/ratings.csv"
     global data  # Hacemos global para que sea accesible en la función de actualización
     data = pd.read_csv(file_path)
     image_links = pd.read_csv(image_links_path)
 
     # Combinar datos de películas con enlaces de imágenes
-    data = pd.merge(data, image_links, on='title', how='left')
+    data = pd.merge(data, image_links, on="title", how="left")
+
+    # Crear ratings.csv si no existe
+    if not os.path.exists(ratings_path):
+        ratings_df = data[["title"]].copy()
+        ratings_df["rating"] = 0  # Inicializar las calificaciones en 0
+        ratings_df.to_csv(ratings_path, index=False)
 
     # Sidebar: Número de películas a mostrar
     st.sidebar.header("Configuración")
@@ -41,17 +64,17 @@ def main():
         value=15,
         step=1,
         key="num_movies",
-        on_change=update_random_movies  # Actualiza películas al cambiar el número
+        on_change=update_random_movies,  # Actualiza películas al cambiar el número
     )
 
     # Inicializar películas aleatorias si no existen en el estado
-    if 'random_movies' not in st.session_state:
+    if "random_movies" not in st.session_state:
         update_random_movies()
 
     # Crear grid de películas
     colums = 5
     random_movies = st.session_state.random_movies
-    grid = [random_movies.iloc[i:i+colums] for i in range(0, len(random_movies), colums)]
+    grid = [random_movies.iloc[i : i + colums] for i in range(0, len(random_movies), colums)]
 
     # Mostrar las películas
     for row in grid:
@@ -65,9 +88,9 @@ def main():
                 st.session_state[movie_key] = 0
 
             with cols[i]:
-                st.subheader(movie['title'])
-                if pd.notna(movie['imagen']):
-                    st.image(movie['imagen'], use_container_width=True)
+                st.subheader(movie["title"])
+                if pd.notna(movie["imagen"]):
+                    st.image(movie["imagen"], use_container_width=True)
                 else:
                     st.write("Imagen no disponible")
 
@@ -79,12 +102,11 @@ def main():
                     label="",
                     maxValue=10,
                     defaultValue=st.session_state.get(movie_key, 0),
-                    key=movie_key
+                    key=movie_key,
                 )
-                
 
-    # calificaciones se guardan automaticamente en un CSV
-    st.sidebar.button("Guardar calificaciones", on_click=save_ratings_to_csv)
+    # Guardar calificaciones en el archivo ratings.csv
+    save_ratings_to_csv()
 
     # Mostrar calificaciones en la barra lateral
     st.sidebar.write("Calificaciones guardadas:")
