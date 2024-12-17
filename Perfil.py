@@ -3,6 +3,22 @@ import streamlit as st
 from streamlit_star_rating import st_star_rating
 import os
 
+# Ruta para almacenar el número de películas seleccionadas
+settings_path = "CSV/settings.csv"
+
+# Función para cargar el número de películas guardado
+def load_saved_num_movies():
+    if os.path.exists(settings_path):
+        settings_df = pd.read_csv(settings_path)
+        if "num_movies" in settings_df.columns:
+            return int(settings_df["num_movies"])
+    return 15  # Valor predeterminado si no hay valor guardado
+
+# Función para guardar el número de películas seleccionado
+def save_num_movies(num_movies):
+    settings_df = pd.DataFrame({"num_movies": [num_movies]})
+    settings_df.to_csv(settings_path, index=False)
+
 # Función para cargar ratings existentes
 def load_existing_ratings():
     ratings_path = "CSV/ratings.csv"
@@ -14,6 +30,7 @@ def load_existing_ratings():
 # Función para actualizar la lista de películas aleatorias
 def update_random_movies():
     st.session_state.random_movies = data.sample(n=st.session_state.num_movies)
+    save_num_movies(st.session_state.num_movies)  # Guardar el número de películas seleccionado
 
 # Guardar calificaciones en un CSV
 def save_ratings_to_csv():
@@ -57,12 +74,15 @@ def main():
         ratings_df["rating"] = 0
         ratings_df.to_csv(ratings_path, index=False)
 
+    # Cargar número de películas guardado
+    default_num_movies = load_saved_num_movies()
+
     st.sidebar.header("Configuración")
     num_movies = st.sidebar.number_input(
         "Número de películas a mostrar:",
         min_value=1,
         max_value=30,
-        value=15,
+        value=default_num_movies,
         step=1,
         key="num_movies",
         on_change=update_random_movies,
@@ -106,6 +126,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
                 # HECHO
                 #añadir: poder votar
