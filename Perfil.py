@@ -21,7 +21,7 @@ def save_num_movies(num_movies):
 
 # Función para cargar ratings existentes
 def load_existing_ratings():
-    ratings_path = "CSV/ratings_cero.csv"
+    ratings_path = "CSV/ratings_valorado.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
         return dict(zip(ratings_df['title'], ratings_df['rating']))
@@ -78,6 +78,7 @@ def save_ratings_to_csv():
     # Guardar los DataFrames actualizados
     ratings_cero_df.to_csv(ratings_cero_path, index=False)
     ratings_valorado_df.to_csv(ratings_valorado_path, index=False)
+
 
 
 def main():
