@@ -12,7 +12,7 @@ def load_saved_num_movies():
         settings_df = pd.read_csv(settings_path)
         if "num_movies" in settings_df.columns:
             return int(settings_df["num_movies"])
-    return 15  # Valor predeterminado si no hay valor guardado
+    return 15
 
 # Función para guardar el número de películas seleccionado
 def save_num_movies(num_movies):
@@ -77,16 +77,13 @@ def main():
     # Cargar número de películas guardado
     default_num_movies = load_saved_num_movies()
 
-    st.sidebar.header("Configuración")
-    num_movies = st.sidebar.number_input(
-        "Número de películas a mostrar:",
-        min_value=1,
-        max_value=30,
-        value=default_num_movies,
-        step=1,
-        key="num_movies",
-        on_change=update_random_movies,
-    )
+    st.selectbox(label= "Selecciona el número de películas a mostrar", options=[5,10,15,20,25,30], 
+                 key="num_movies", on_change=update_random_movies, 
+                 index=[i for i, x in enumerate([5,10,15,20,25,30]) if x == default_num_movies][0])
+
+    if "num_movies" not in st.session_state:
+        st.session_state.num_movies = default_num_movies
+    
 
     if "random_movies" not in st.session_state:
         update_random_movies()
