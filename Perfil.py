@@ -1,58 +1,122 @@
 import pandas as pd
 import streamlit as st
 from streamlit_star_rating import st_star_rating
+import os
+
+# Función para cargar ratings existentes
+def load_existing_ratings():
+    ratings_path = "CSV/ratings.csv"
+    if os.path.exists(ratings_path):
+        ratings_df = pd.read_csv(ratings_path)
+        return dict(zip(ratings_df['title'], ratings_df['rating']))
+    return {}
+
+# Función para actualizar la lista de películas aleatorias
+def update_random_movies():
+    st.session_state.random_movies = data.sample(n=st.session_state.num_movies)
+
+# Guardar calificaciones en un CSV
+def save_ratings_to_csv():
+    ratings_path = "CSV/ratings.csv"
+    if os.path.exists(ratings_path):
+        ratings_df = pd.read_csv(ratings_path)
+    else:
+        ratings_df = pd.DataFrame(columns=["title", "rating"])
+
+    for key, value in st.session_state.items():
+        if key.startswith("rating_"):
+            title = key.replace("rating_", "")
+            if title in ratings_df["title"].values:
+                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
+            else:
+                ratings_df = pd.concat(
+                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
+                    ignore_index=True,
+                )
+
+    ratings_df.to_csv(ratings_path, index=False)
 
 def main():
-    st.set_page_config(layout="wide") # Se configura para que ocupe todo el ancho de la web (incluye responsive)
-    st.title("Recomendador Películas")
+    st.set_page_config(layout="wide")
+    st.title("Perfil de usuario")
 
-    file_path = 'CSV/peliculas_limpio.csv' # Se guarda el CSV en una variable
-    data = pd.read_csv(file_path) # Se lee el CSV
+    file_path = "CSV/peliculas_limpio.csv"
+    image_links_path = "CSV/link_imagenes.csv"
+    ratings_path = "CSV/ratings.csv"
+    global data
+    data = pd.read_csv(file_path)
+    image_links = pd.read_csv(image_links_path)
 
-    num_movies = st.sidebar.number_input("Número de películas a mostrar:", min_value=1, max_value=30, value=15)
-    random_movies = data.sample(n=num_movies) # Salen películas aleatorias
+    data = pd.merge(data, image_links, on="title", how="left")
 
-    colums = 5 # Número de columnas
+    # Cargar ratings existentes
+    existing_ratings = load_existing_ratings()
 
-    grid = [random_movies.iloc[i:i+colums] for i in range(0, len(random_movies), colums)] # Formación del Grid para las películas
+    if not os.path.exists(ratings_path):
+        ratings_df = data[["title"]].copy()
+        ratings_df["rating"] = 0
+        ratings_df.to_csv(ratings_path, index=False)
 
-    rating = 0
+    st.sidebar.header("Configuración")
+    num_movies = st.sidebar.number_input(
+        "Número de películas a mostrar:",
+        min_value=1,
+        max_value=30,
+        value=15,
+        step=1,
+        key="num_movies",
+        on_change=update_random_movies,
+    )
+
+    if "random_movies" not in st.session_state:
+        update_random_movies()
+
+    colums = 5
+    random_movies = st.session_state.random_movies
+    grid = [random_movies.iloc[i : i + colums] for i in range(0, len(random_movies), colums)]
 
     for row in grid:
-        cols = st.columns(colums) # Se colocan los datos en esas columnas ya formadas
-
+        cols = st.columns(colums)
         for i, movie in enumerate(row.iterrows()):
-            movie = movie[1] # Agarramos los datos de la película, ignorando el índice
+            movie = movie[1]
             movie_key = f"rating_{movie['title']}"
-            with cols[i]: # Recorremos columna por columna
-                st.subheader(movie['title']) # Agarramos el título
-                st.write(f"Género: {movie['genre']}") # Agarramos el género
-                st.write(f"Año: {movie['year']}") # Agarramos el año
 
+            # Usar el rating existente o 0 si no existe
+            if movie_key not in st.session_state:
+                st.session_state[movie_key] = existing_ratings.get(movie['title'], 0)
 
-                if movie_key not in st.session_state:
-                    st.session_state[movie_key] = 0                
-                
-                st.session_state[movie_key] = rating # Guardar la votación en la sesión
+            with cols[i]:
+                st.subheader(movie["title"])
+                if pd.notna(movie["imagen"]):
+                    st.image(movie["imagen"], use_container_width=True)
+                else:
+                    st.write("Imagen no disponible")
+
+                st.write(f"Género: {movie['genre']}")
+                st.write(f"Año: {movie['year']}")
 
                 rating = st_star_rating(
-                    label="", 
-                    maxValue=5, 
-                    defaultValue=st.session_state[movie_key], 
-                    key=movie_key) # Poner 5 estrellas debajo de cada película.
-                
-                
-                
+                    label="",
+                    maxValue=10,
+                    defaultValue=st.session_state[movie_key],
+                    key=movie_key,
+                )
 
-                #añadir: poder votar
-                #añadir: guardar votaciones en un csv que se cargue siempre que se inicie la app
-                #añadir: mostrar las películas recomendadas en función de las votaciones (pelis que no se hayan votado todavía)
-                #scrapper para coger caratulas de pelis
-                #añadir: poder escoger cuantas paelis aparecen en el recomendador
-                #añadir: poder tener un historial de las pelis que se han votado
-                #añadir: Hacer un autocompletar para buscar películas
-                #añadir: ratio con el que se recomiendan las películas
-
+    save_ratings_to_csv()
 
 if __name__ == "__main__":
     main()
+
+                # HECHO
+                #añadir: poder votar
+                #añadir: guardar votaciones en un csv que se cargue siempre que se inicie la app
+                #scrapper para coger caratulas de pelis
+                #añadir: poder escoger cuantas paelis aparecen en el recomendador
+
+                # ----------------------------------------------------------------------------------
+
+                # POR HACER
+                #añadir: mostrar las películas recomendadas en función de las votaciones (pelis que no se hayan votado todavía)
+                #añadir: poder tener un historial de las pelis que se han votado
+                #añadir: Hacer un autocompletar para buscar películas
+                #añadir: ratio con el que se recomiendan las películas
