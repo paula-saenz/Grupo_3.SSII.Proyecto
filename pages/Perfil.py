@@ -80,6 +80,7 @@ def save_ratings_to_csv():
     ratings_valorado_df.to_csv(ratings_valorado_path, index=False)
 
 
+
 def main():
     st.set_page_config(layout="wide")
     st.title("Perfil de usuario")
