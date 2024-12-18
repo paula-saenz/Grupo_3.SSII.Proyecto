@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 from streamlit_star_rating import st_star_rating
+from streamlit_js_eval import streamlit_js_eval
 import os
 
 # Ruta para almacenar el número de películas seleccionadas
@@ -148,6 +149,14 @@ def main():
                 )
 
     save_ratings_to_csv()
+
+    # Botón para recargar la página centrado
+    col1, col2, col3, col4 = st.columns([0.5, 0.5, 0.5, 2])    
+    with col4:
+        if st.button("Recargar página"):
+            streamlit_js_eval(js_expressions="parent.window.location.reload()")
+
+        
 
 if __name__ == "__main__":
     main()
