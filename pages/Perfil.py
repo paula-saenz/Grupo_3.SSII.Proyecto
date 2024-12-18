@@ -155,6 +155,8 @@ def main():
     with col4:
         if st.button("Recargar página"):
             streamlit_js_eval(js_expressions="parent.window.location.reload()")
+    
+    
 
         
 
