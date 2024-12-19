@@ -35,28 +35,28 @@ def load_existing_ratings():
 
 # Guardar calificaciones en un CSV
 def save_ratings_to_csv():
-    ratings_valorado_path = "CSV/ratings_valorado.csv"
+    ratings_path = "CSV/ratings.csv"
 
     # Cargar los archivos CSV si existen, o inicializarlos
-    if os.path.exists(ratings_valorado_path):
-        ratings_valorado_df = pd.read_csv(ratings_valorado_path)
+    if os.path.exists(ratings_path):
+        ratings_df = pd.read_csv(ratings_path)
     else:
-        ratings_valorado_df = pd.DataFrame(columns=["title", "rating"])
+        ratings_df = pd.DataFrame(columns=["title", "rating"])
 
     # Procesar las calificaciones desde el estado de sesión
     for key, value in st.session_state.items():
         if key.startswith("rating_"):
             title = key.replace("rating_", "")
             # Actualizar o añadir en ratings_valorado
-            if title in ratings_valorado_df["title"].values:
-                ratings_valorado_df.loc[ratings_valorado_df["title"] == title, "rating"] = value
+            if title in ratings_df["title"].values:
+                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
             else:
-                ratings_valorado_df = pd.concat(
-                    [ratings_valorado_df, pd.DataFrame([{"title": title, "rating": value}])],
+                ratings_df = pd.concat(
+                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
                     ignore_index=True,
                 )
     # Guardar los DataFrames actualizados
-    ratings_valorado_df.to_csv(ratings_valorado_path, index=False)
+    ratings_df.to_csv(ratings_path, index=False)
 
 def main():
     st.set_page_config(layout="wide")
