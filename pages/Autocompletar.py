@@ -30,8 +30,8 @@ def load_existing_ratings():
     return {}
 
 # Función para actualizar la lista de películas aleatorias
-def update_random_movies_perfil():
-    st.session_state.perfil_random_movies = data.sample(n=st.session_state.num_movies)
+def update_random_movies_auto():
+    st.session_state.auto_random_movies = data.sample(n=st.session_state.num_movies)
     save_num_movies(st.session_state.num_movies)  # Guardar el número de películas seleccionado
 
 # Guardar calificaciones en un CSV
@@ -110,28 +110,49 @@ def main():
         label="Selecciona el número de películas a mostrar",
         options=[5, 10, 15, 20, 25, 30],
         key="num_movies",
-        on_change=update_random_movies_perfil,
+        on_change=update_random_movies_auto,
         index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == default_num_movies][0],
     )
 
     if "num_movies" not in st.session_state:
         st.session_state.num_movies = default_num_movies
 
-    if "perfil_random_movies" not in st.session_state:
-        update_random_movies_perfil()
+    if "auto_random_movies" not in st.session_state:
+        update_random_movies_auto()
 
     # Sugerencias dinámicas
     st.subheader("Sugerencias dinámicas")
-    selected_movie = st.selectbox("Escribe y selecciona una película:", options=data["title"].tolist(), key="autocomplete")
+    selected_movie = st.selectbox(
+        "Escribe y selecciona una película:", 
+        options=[""] + data["title"].tolist(), 
+        key="autocomplete"
+    )
 
-    if selected_movie:
+    # Lógica para mostrar resultados basados en la selección
+    if selected_movie == "":
+        if st.session_state.get("enter_pressed", False):  # Mostrar todas al presionar Enter
+            st.session_state.auto_random_movies = data.sample(n=st.session_state.num_movies)
+        else:  # No mostrar nada si el campo está vacío y no se presionó Enter
+            st.session_state.auto_random_movies = pd.DataFrame()
+    else:
         # Filtrar películas por la selección
         search_results = data[data["title"] == selected_movie]
-        st.session_state.perfil_random_movies = search_results.head(st.session_state.num_movies)
-    else:
-        st.session_state.perfil_random_movies = data.sample(n=st.session_state.num_movies)
+        st.session_state.auto_random_movies = search_results.head(st.session_state.num_movies)
 
-    display_movies(st.session_state.perfil_random_movies)
+    # Mostrar películas seleccionadas
+    if not st.session_state.auto_random_movies.empty:
+        display_movies(st.session_state.auto_random_movies)
+
+    # Capturar evento Enter
+    streamlit_js_eval(
+        js_expressions="document.addEventListener('keydown', e => { if (e.key === 'Enter') { window.parent.postMessage({ type: 'enter_pressed' }, '*') } })",
+        key="enter_listener"
+    )
+    st.session_state.enter_pressed = st.query_params.get("enter_pressed", False)
+
+    # Botón para recargar la página
+    if st.button("Recargar página"):
+        streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
 if __name__ == "__main__":
     main()
