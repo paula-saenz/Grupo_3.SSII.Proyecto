@@ -26,9 +26,10 @@ def save_num_movies(num_movies):
 
 # Función para cargar ratings existentes
 def load_existing_ratings():
-    ratings_path = "CSV/ratings_valorado.csv"
+    ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
+        ratings_df = ratings_df[ratings_df['rating'] != 0]
         return dict(zip(ratings_df['title'], ratings_df['rating']))
     return {}
 
@@ -63,7 +64,7 @@ def main():
 
     file_path = "CSV/peliculas_limpio.csv"
     image_links_path = "CSV/link_imagenes.csv"
-    ratings_cero_path = "CSV/ratings_valorado.csv"
+    ratings_valorado_path = "CSV/ratings.csv"
     global data
     data = pd.read_csv(file_path)
     image_links = pd.read_csv(image_links_path)
@@ -73,10 +74,10 @@ def main():
     # Cargar ratings existentes
     existing_ratings = load_existing_ratings()
 
-    if not os.path.exists(ratings_cero_path):
+    if not os.path.exists(ratings_valorado_path):
         ratings_df = data[["title"]].copy()
         ratings_df["rating"] = 0
-        ratings_df.to_csv(ratings_cero_path, index=False)
+        ratings_df.to_csv(ratings_valorado_path, index=False)
 
     # Cargar número de películas guardado
     default_num_movies = load_saved_num_movies()

@@ -22,64 +22,38 @@ def save_num_movies(num_movies):
 
 # Función para cargar ratings existentes
 def load_existing_ratings():
-    ratings_path = "CSV/ratings_valorado.csv"
+    ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
+        ratings_df = ratings_df[ratings_df['rating'] == 0]
         return dict(zip(ratings_df['title'], ratings_df['rating']))
     return {}
 
 # Función para actualizar la lista de películas aleatorias
-def update_random_movies():
-    st.session_state.random_movies = data.sample(n=st.session_state.num_movies)
+def update_random_movies_perfil():
+    st.session_state.perfil_random_movies = data.sample(n=st.session_state.num_movies)
     save_num_movies(st.session_state.num_movies)  # Guardar el número de películas seleccionado
 
 # Guardar calificaciones en un CSV
 def save_ratings_to_csv():
-    ratings_cero_path = "CSV/ratings_cero.csv"
-    ratings_valorado_path = "CSV/ratings_valorado.csv"
-
-    # Cargar los archivos CSV si existen, o inicializarlos
-    if os.path.exists(ratings_cero_path):
-        ratings_cero_df = pd.read_csv(ratings_cero_path)
+    ratings_path = "CSV/ratings.csv"
+    if os.path.exists(ratings_path):
+        ratings_df = pd.read_csv(ratings_path)
     else:
-        ratings_cero_df = pd.DataFrame(columns=["title", "rating"])
+        ratings_df = pd.DataFrame(columns=["title", "rating"])
 
-    if os.path.exists(ratings_valorado_path):
-        ratings_valorado_df = pd.read_csv(ratings_valorado_path)
-    else:
-        ratings_valorado_df = pd.DataFrame(columns=["title", "rating"])
-
-    # Procesar las calificaciones desde el estado de sesión
     for key, value in st.session_state.items():
         if key.startswith("rating_"):
             title = key.replace("rating_", "")
-
-            # Si la calificación es 0, añadir al archivo ratings_cero
-            if value == 0:
-                if title not in ratings_cero_df["title"].values:
-                    ratings_cero_df = pd.concat(
-                        [ratings_cero_df, pd.DataFrame([{"title": title, "rating": value}])],
-                        ignore_index=True,
-                    )
-
-            # Si la calificación es distinta de 0, añadir a ratings_valorado
+            if title in ratings_df["title"].values:
+                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
             else:
-                # Eliminar de ratings_cero si el título existe
-                ratings_cero_df = ratings_cero_df[ratings_cero_df["title"] != title]
+                ratings_df = pd.concat(
+                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
+                    ignore_index=True,
+                )
 
-                # Actualizar o añadir en ratings_valorado
-                if title in ratings_valorado_df["title"].values:
-                    ratings_valorado_df.loc[ratings_valorado_df["title"] == title, "rating"] = value
-                else:
-                    ratings_valorado_df = pd.concat(
-                        [ratings_valorado_df, pd.DataFrame([{"title": title, "rating": value}])],
-                        ignore_index=True,
-                    )
-
-    # Guardar los DataFrames actualizados
-    ratings_cero_df.to_csv(ratings_cero_path, index=False)
-    ratings_valorado_df.to_csv(ratings_valorado_path, index=False)
-
+    ratings_df.to_csv(ratings_path, index=False)
 
 
 def main():
@@ -88,7 +62,7 @@ def main():
 
     file_path = "CSV/peliculas_limpio.csv"
     image_links_path = "CSV/link_imagenes.csv"
-    ratings_cero_path = "CSV/ratings_cero.csv"
+    ratings_path = "CSV/ratings.csv"
     global data
     data = pd.read_csv(file_path)
     image_links = pd.read_csv(image_links_path)
@@ -98,27 +72,27 @@ def main():
     # Cargar ratings existentes
     existing_ratings = load_existing_ratings()
 
-    if not os.path.exists(ratings_cero_path):
+    if not os.path.exists(ratings_path):
         ratings_df = data[["title"]].copy()
         ratings_df["rating"] = 0
-        ratings_df.to_csv(ratings_cero_path, index=False)
+        ratings_df.to_csv(ratings_path, index=False)
 
     # Cargar número de películas guardado
     default_num_movies = load_saved_num_movies()
 
     st.selectbox(label= "Selecciona el número de películas a mostrar", options=[5,10,15,20,25,30], 
-                 key="num_movies", on_change=update_random_movies, 
+                 key="num_movies", on_change=update_random_movies_perfil, 
                  index=[i for i, x in enumerate([5,10,15,20,25,30]) if x == default_num_movies][0])
 
     if "num_movies" not in st.session_state:
         st.session_state.num_movies = default_num_movies
     
 
-    if "random_movies" not in st.session_state:
-        update_random_movies()
+    if "perfil_random_movies" not in st.session_state:
+        update_random_movies_perfil()
 
     colums = 5
-    random_movies = st.session_state.random_movies
+    random_movies = st.session_state.perfil_random_movies
     grid = [random_movies.iloc[i : i + colums] for i in range(0, len(random_movies), colums)]
 
     for row in grid:
