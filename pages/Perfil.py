@@ -43,8 +43,15 @@ def recomendar_peli(peli, similarity_df, df_ratings):
     if peli not in df_ratings['title'].values:
         return f"La película '{peli}' no se encuentra en la base de datos."
     
+    # Obtener películas similares
     similar_movies = similarity_df[peli].sort_values(ascending=False)
-    similar_movies_with_zero_rating = similar_movies[similar_movies.index.isin(df_ratings[df_ratings['rating'] == 0]['title'])]
+    
+    # Filtrar solo aquellas con rating igual a 0 y excluir la película buscada
+    similar_movies_with_zero_rating = similar_movies[
+        (similar_movies.index.isin(df_ratings[df_ratings['rating'] == 0]['title'])) & 
+        (similar_movies.index != peli)
+    ]
+    
     return similar_movies_with_zero_rating.head(10) if not similar_movies_with_zero_rating.empty else f"No hay películas similares a '{peli}' con rating igual a 0."
 
 def main():
