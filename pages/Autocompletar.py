@@ -122,22 +122,32 @@ def main():
 
     # Sugerencias dinámicas
     st.subheader("Sugerencias dinámicas")
+
+    # Función para filtrar títulos que EMPIEZAN por lo escrito
+    def filter_titles(search):
+        return [title for title in data['title'] if title.lower().startswith(search.lower())]
+
+    # Campo de búsqueda
+    search = st.text_input("Escribe el inicio de una película:", key="search_input")
+
+    # Filtrar y mostrar opciones
+    filtered_titles = filter_titles(search)
     selected_movie = st.selectbox(
-        "Escribe y selecciona una película:", 
-        options=[""] + data["title"].tolist(), 
-        key="autocomplete"
+        "Selecciona una película:",
+        options=[""] + filtered_titles,
+        key="movie_select"
     )
 
     # Lógica para mostrar resultados basados en la selección
-    if selected_movie == "":
+    if selected_movie:
+        # Filtrar películas por la selección
+        search_results = data[data["title"] == selected_movie]
+        st.session_state.auto_random_movies = search_results.head(st.session_state.num_movies)
+    else:
         if st.session_state.get("enter_pressed", False):  # Mostrar todas al presionar Enter
             st.session_state.auto_random_movies = data.sample(n=st.session_state.num_movies)
         else:  # No mostrar nada si el campo está vacío y no se presionó Enter
             st.session_state.auto_random_movies = pd.DataFrame()
-    else:
-        # Filtrar películas por la selección
-        search_results = data[data["title"] == selected_movie]
-        st.session_state.auto_random_movies = search_results.head(st.session_state.num_movies)
 
     # Mostrar películas seleccionadas
     if not st.session_state.auto_random_movies.empty:
