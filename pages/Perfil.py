@@ -1,42 +1,25 @@
 import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
 import streamlit as st
 from streamlit_star_rating import st_star_rating
-from streamlit_js_eval import streamlit_js_eval
 import os
-
-# Ruta para almacenar el número de películas seleccionadas
-settings_path = "CSV/settings.csv"
-
-# Función para cargar el número de películas guardado
-def load_saved_num_movies():
-    if os.path.exists(settings_path):
-        settings_df = pd.read_csv(settings_path)
-        if "num_movies" in settings_df.columns:
-            return int(settings_df["num_movies"])
-    return 15
-
-# Función para guardar el número de películas seleccionado
-def save_num_movies(num_movies):
-    settings_df = pd.DataFrame({"num_movies": [num_movies]})
-    settings_df.to_csv(settings_path, index=False)
 
 # Función para cargar ratings existentes
 def load_existing_ratings():
     ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
-        ratings_df = ratings_df[ratings_df['rating'] == 0]
+        ratings_df = ratings_df[ratings_df['rating'] != 0]
         return dict(zip(ratings_df['title'], ratings_df['rating']))
     return {}
-
-# Función para actualizar la lista de películas aleatorias
-def update_random_movies_perfil():
-    st.session_state.perfil_random_movies = data.sample(n=st.session_state.num_movies)
-    save_num_movies(st.session_state.num_movies)  # Guardar el número de películas seleccionado
 
 # Guardar calificaciones en un CSV
 def save_ratings_to_csv():
     ratings_path = "CSV/ratings.csv"
+
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
     else:
@@ -55,99 +38,89 @@ def save_ratings_to_csv():
 
     ratings_df.to_csv(ratings_path, index=False)
 
+# Función para recomendar películas
+def recomendar_peli(peli, similarity_df, df_ratings):
+    if peli not in df_ratings['title'].values:
+        return f"La película '{peli}' no se encuentra en la base de datos."
+    
+    similar_movies = similarity_df[peli].sort_values(ascending=False)
+    similar_movies_with_zero_rating = similar_movies[similar_movies.index.isin(df_ratings[df_ratings['rating'] == 0]['title'])]
+    return similar_movies_with_zero_rating.head(10) if not similar_movies_with_zero_rating.empty else f"No hay películas similares a '{peli}' con rating igual a 0."
 
 def main():
     st.set_page_config(layout="wide")
-    st.title("Perfil de usuario")
+    st.title("Recomendaciones de Películas")
 
-    file_path = "CSV/peliculas_limpio.csv"
-    image_links_path = "CSV/link_imagenes.csv"
-    ratings_path = "CSV/ratings.csv"
-    global data
-    data = pd.read_csv(file_path)
-    image_links = pd.read_csv(image_links_path)
+    # Cargar datos
+    data_df = pd.read_csv("CSV/peliculas_limpio.csv")
+    data_df_ratings = pd.read_csv("CSV/ratings.csv")
+    image_links = pd.read_csv("CSV/link_imagenes.csv")
 
-    data = pd.merge(data, image_links, on="title", how="left")
+    df = data_df[["title", "year", "genre", "director", "writer"]]
+    df_ratings = data_df_ratings[["title", "rating"]]
 
-    # Cargar ratings existentes
-    existing_ratings = load_existing_ratings()
+    # Combinar datos con imágenes
+    data_df = pd.merge(data_df, image_links, on="title", how="left")
 
-    if not os.path.exists(ratings_path):
-        ratings_df = data[["title"]].copy()
-        ratings_df["rating"] = 0
-        ratings_df.to_csv(ratings_path, index=False)
+    # Procesar características para similitud
+    encoder = OneHotEncoder(sparse_output=False)
+    genre_en = encoder.fit_transform(df[["genre"]])
+    director_en = encoder.fit_transform(df[["director"]])
+    writer_en = encoder.fit_transform(df[["writer"]])
+    year_en = df[["year"]].values
 
-    # Cargar número de películas guardado
-    default_num_movies = load_saved_num_movies()
+    tfidf_vectorizer = TfidfVectorizer()
+    title_en = tfidf_vectorizer.fit_transform(df["title"]).toarray()
 
-    st.selectbox(label= "Selecciona el número de películas a mostrar", options=[5,10,15,20,25,30], 
-                 key="num_movies", on_change=update_random_movies_perfil, 
-                 index=[i for i, x in enumerate([5,10,15,20,25,30]) if x == default_num_movies][0])
+    matriz_caract = np.hstack((year_en, genre_en, director_en, writer_en, title_en))
+    matriz_sim = cosine_similarity(matriz_caract)
+    similarity_df = pd.DataFrame(matriz_sim, index=df["title"], columns=df["title"])
 
-    if "num_movies" not in st.session_state:
-        st.session_state.num_movies = default_num_movies
-    
+    # Buscar película
+    selected_movie = st.text_input("Escribe el título de una película para buscar recomendaciones:")
 
-    if "perfil_random_movies" not in st.session_state:
-        update_random_movies_perfil()
+    # Mostrar recomendaciones
+    if selected_movie:
+        st.subheader(f"Películas similares a: {selected_movie}")
+        recomendaciones = recomendar_peli(selected_movie, similarity_df, df_ratings)
 
-    colums = 5
-    random_movies = st.session_state.perfil_random_movies
-    grid = [random_movies.iloc[i : i + colums] for i in range(0, len(random_movies), colums)]
+        if isinstance(recomendaciones, str):
+            st.write(recomendaciones)
+        else:
+            # Mostrar las películas recomendadas en formato de galería
+            colums = 5
+            recommended_titles = recomendaciones.index
+            recommended_movies = data_df[data_df['title'].isin(recommended_titles)]
+            grid = [recommended_movies.iloc[i : i + colums] for i in range(0, len(recommended_movies), colums)]
 
-    for row in grid:
-        cols = st.columns(colums)
-        for i, movie in enumerate(row.iterrows()):
-            movie = movie[1]
-            movie_key = f"rating_{movie['title']}"
+            for row in grid:
+                cols = st.columns(colums)
+                for i, movie in enumerate(row.iterrows()):
+                    movie = movie[1]
+                    movie_key = f"rating_{movie['title']}"
 
-            # Usar el rating existente o 0 si no existe
-            if movie_key not in st.session_state:
-                st.session_state[movie_key] = existing_ratings.get(movie['title'], 0)
+                    if movie_key not in st.session_state:
+                        st.session_state[movie_key] = 0
 
-            with cols[i]:
-                st.subheader(movie["title"])
-                if pd.notna(movie["imagen"]):
-                    st.image(movie["imagen"], use_container_width=True)
-                else:
-                    st.write("Imagen no disponible")
+                    with cols[i]:
+                        st.subheader(movie["title"])
+                        if pd.notna(movie["imagen"]):
+                            st.image(movie["imagen"], use_container_width=True)
+                        else:
+                            st.write("Imagen no disponible")
 
-                st.write(f"Género: {movie['genre']}")
-                st.write(f"Año: {movie['year']}")
+                        st.write(f"Género: {movie['genre']}")
+                        st.write(f"Año: {movie['year']}")
 
-                rating = st_star_rating(
-                    label="",
-                    maxValue=10,
-                    defaultValue=st.session_state[movie_key],
-                    key=movie_key,
-                )
+                        st_star_rating(
+                            label="",
+                            maxValue=10,
+                            defaultValue=st.session_state[movie_key],
+                            key=movie_key,
+                        )
 
+    # Guardar calificaciones
     save_ratings_to_csv()
-
-    # Botón para recargar la página centrado
-    col1, col2, col3, col4 = st.columns([0.5, 0.5, 0.5, 2])    
-    with col4:
-        if st.button("Recargar página"):
-            streamlit_js_eval(js_expressions="parent.window.location.reload()")
-    
-    
-
-        
 
 if __name__ == "__main__":
     main()
-
-
-                # HECHO
-                #añadir: poder votar
-                #añadir: guardar votaciones en un csv que se cargue siempre que se inicie la app
-                #scrapper para coger caratulas de pelis
-                #añadir: poder escoger cuantas paelis aparecen en el recomendador
-
-                # ----------------------------------------------------------------------------------
-
-                # POR HACER
-                #añadir: mostrar las películas recomendadas en función de las votaciones (pelis que no se hayan votado todavía)
-                #añadir: poder tener un historial de las pelis que se han votado
-                #añadir: Hacer un autocompletar para buscar películas
-                #añadir: ratio con el que se recomiendan las películas

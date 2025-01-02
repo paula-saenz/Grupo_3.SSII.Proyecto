@@ -3,18 +3,18 @@ Black Panther,9.0
 Avengers: Endgame,8.0
 Mission: Impossible -- Fallout,0.0
 Mad Max: Fury Road,0.0
-Spider-Man: Into the Spider-Verse,
+Spider-Man: Into the Spider-Verse,0.0
 Wonder Woman,9.0
 Dunkirk,0.0
 Coco,0.0
 Thor: Ragnarok,0.0
-Logan,0.0
+Logan,10.0
 Star Wars: The Last Jedi,7.0
 Star Wars: The Force Awakens,4.0
 The Adventures of Robin Hood,6.0
 King Kong,7.0
 Spider-Man: Far From Home,10.0
-Incredibles 2,10.0
+Incredibles 2,9.0
 Zootopia,10.0
 War for the Planet of the Apes,0.0
 Spider-Man: Homecoming,9.0
@@ -39,7 +39,7 @@ The Hurt Locker,0.0
 The LEGO Movie,8.0
 Star Trek,8.0
 Moana,0.0
-Avengers: Infinity War,0.0
+Avengers: Infinity War,
 Ant-Man and The Wasp,0.0
 Star Wars,0.0
 Isle of Dogs,0.0
@@ -48,8 +48,8 @@ Goldfinger,0.0
 Guardians of the Galaxy,0.0
 Kubo and the Two Strings,0.0
 WALL-E,0.0
-Marvel's the Avengers,0.0
-Iron Man,0.0
+Marvel's the Avengers,
+Iron Man,
 The Terminator,0.0
 The African Queen,0.0
 Rio Bravo,0.0
@@ -77,15 +77,15 @@ Guardians of the Galaxy Vol. 2,0.0
 The Peanut Butter Falcon,0.0
 No Country for Old Men,0.0
 Dawn of the Planet of the Apes,0.0
-Captain Marvel,0.0
-Onward,0.0
+Captain Marvel,
+Onward,10.0
 Sicario,0.0
 Ghostbusters,0.0
 Ran,0.0
 A Fistful of Dollars,0.0
 Henry V,0.0
 The Lord of the Rings: The Two Towers,0.0
-Captain America: The Winter Soldier,0.0
+Captain America: The Winter Soldier,
 Back to the Future,0.0
 Assault on Precinct 13,0.0
 The Searchers,0.0
@@ -190,7 +190,7 @@ Grand Illusion,0.0
 Nosferatu,0.0
 The Battle of Algiers,0.0
 Shoplifters,0.0
-M,0.0
+M,
 The 400 Blows,0.0
 Rashomon,0.0
 Army in the Shadows,0.0
@@ -211,7 +211,7 @@ A Separation,0.0
 Things to Come,0.0
 Song of the Road,0.0
 The Salesman,0.0
-8 1/2,0.0
+8 1/2,
 Tampopo,0.0
 Gloria,0.0
 Ikiru,0.0
@@ -423,7 +423,7 @@ Welcome to Chechnya,0.0
 Shirkers,0.0
 Anvil! The Story of Anvil,0.0
 Inside Job,0.0
-All In: The Fight for Democracy,0.0
+All In: The Fight for Democracy,7.0
 The Square,0.0
 Seymour: An Introduction,0.0
 The Missing Picture,0.0
@@ -435,7 +435,7 @@ One Child Nation,0.0
 Bright Lights: Starring Carrie Fisher and Debbie Reynolds,0.0
 Hoop Dreams,0.0
 Citizenfour,0.0
-On the Record,0.0
+On the Record,
 The Interrupters,0.0
 Slay the Dragon,0.0
 Strong Island,0.0
@@ -467,7 +467,7 @@ This Is Not a Film,0.0
 When We Were Kings,0.0
 RBG,0.0
 The Painter and the Thief,0.0
-March of the Penguins,
+March of the Penguins,0.0
 Hitchcock/Truffaut,0.0
 Kurt Cobain: Montage of Heck,0.0
 Cave of Forgotten Dreams,0.0
@@ -516,7 +516,7 @@ Hell or High Water,0.0
 Bicycle Thieves,0.0
 Brooklyn,0.0
 The Babadook,0.0
-Creed,0.0
+Creed,9.0
 The Wrestler,0.0
 Dolemite Is My Name,0.0
 First Man,0.0
@@ -533,7 +533,7 @@ Get Out,0.0
 Hereditary,0.0
 It Follows,0.0
 The Silence of the Lambs,0.0
-Halloween,0.0
+Halloween,1.0
 Pan's Labyrinth,0.0
 Host,0.0
 The Witch,0.0
@@ -718,7 +718,7 @@ Titanic,0.0
 Say Anything...,0.0
 The Lunchbox,0.0
 Sense and Sensibility,0.0
-The Half of It,0.0
+The Half of It,
 From Here to Eternity,0.0
 Foreign Correspondent,0.0
 Four Weddings and a Funeral,0.0
@@ -965,7 +965,7 @@ Seraphim Falls,0.0
 Ned Kelly,0.0
 Down in the Valley,0.0
 Cowboys & Aliens,0.0
-The Pale Door,0.0
+The Pale Door,
 Three Amigos!,0.0
 Brimstone,0.0
 Jane Got a Gun,0.0
