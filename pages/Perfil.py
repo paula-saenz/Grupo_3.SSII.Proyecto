@@ -77,9 +77,8 @@ def main():
     year_en = df[["year"]].values
 
     tfidf_vectorizer = TfidfVectorizer()
-    title_en = tfidf_vectorizer.fit_transform(df["title"]).toarray()
 
-    matriz_caract = np.hstack((year_en, genre_en, director_en, writer_en, title_en))
+    matriz_caract = np.hstack((year_en, genre_en, director_en, writer_en))
     matriz_sim = cosine_similarity(matriz_caract)
     similarity_df = pd.DataFrame(matriz_sim, index=df["title"], columns=df["title"])
 

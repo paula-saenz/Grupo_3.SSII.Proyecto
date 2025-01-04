@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import MinMaxScaler
 
 # Cargar los datos
 data_df = pd.read_csv("CSV/peliculas_limpio.csv")
@@ -18,24 +18,29 @@ df = data_df[["title", "year", "genre", "director", "writer"]]
 if df.shape[0] != df_ratings.shape[0]:
     raise ValueError("El número de filas en las películas y las calificaciones no coincide")
 
-# Codificación One-Hot para múltiples características
-encoder = OneHotEncoder(sparse_output=False)
-genre_en = encoder.fit_transform(df[["genre"]])
-director_en = encoder.fit_transform(df[["director"]])
-writer_en = encoder.fit_transform(df[["writer"]])
+df["genre"] = df["genre"].fillna("")
+df["director"] = df["director"].fillna("")
+df["writer"] = df["writer"].fillna("")
 
-year_en = df[["year"]].values
+# Instancias de TfidfVectorizer para cada columna
+tfidf_genre_vectorizer = TfidfVectorizer()
+tfidf_director_vectorizer = TfidfVectorizer()
+tfidf_writer_vectorizer = TfidfVectorizer()
 
-# Usar TF-IDF para codificar los títulos
-tfidf_vectorizer = TfidfVectorizer()
-title_en = tfidf_vectorizer.fit_transform(df["title"]).toarray()
+# Transformar las columnas con TF-IDF
+tfidf_genre = tfidf_genre_vectorizer.fit_transform(df["genre"]).toarray()
+tfidf_director = tfidf_director_vectorizer.fit_transform(df["director"]).toarray()
+tfidf_writer = tfidf_writer_vectorizer.fit_transform(df["writer"]).toarray()
 
-# Crear la matriz de características incluyendo el título
-matriz_caract = np.hstack((year_en, genre_en, director_en, writer_en, title_en))
+# Escalar el año
+scaler = MinMaxScaler()
+year_en = scaler.fit_transform(df[["year"]])
+
+# Crear la matriz de características incluyendo el año y TF-IDF
+matriz_caract = np.hstack((year_en, tfidf_genre, tfidf_director, tfidf_writer))
 
 # Calcular la matriz de similitud
 matriz_sim = cosine_similarity(matriz_caract)
-
 similarity_df = pd.DataFrame(matriz_sim, index=df["title"], columns=df["title"])
 
 def recomendar_peli(peli):
@@ -55,6 +60,6 @@ def recomendar_peli(peli):
         return f"No hay películas similares a '{peli}' con rating igual a 0."
 
 # Ejemplo de uso
-pelicula = "Avengers: Endgame"
+pelicula = "Ant-Man and The Wasp"
 print(f"\nPeliculas similares a: {pelicula}")
 print(recomendar_peli(pelicula))
