@@ -2,12 +2,11 @@ import pandas as pd
 import streamlit as st
 from streamlit_star_rating import st_star_rating
 import os
+#from codigos.setting import load_settings_galeria
 
-# Ruta para almacenar los ajustes de las ventanas
 settings_path = "CSV/settings.csv"
 
-# Función para cargar o inicializar el archivo de configuración
-def load_or_initialize_settings():
+def load_settings_galeria():
     if not os.path.exists(settings_path):
         # Crear un DataFrame con los valores iniciales
         settings_df = pd.DataFrame({
@@ -19,19 +18,20 @@ def load_or_initialize_settings():
     else:
         # Cargar el archivo existente
         settings_df = pd.read_csv(settings_path)
+        galeria = "galería"
         # Verificar si las ventanas necesarias están presentes; si no, agregarlas
-        required_windows = ["galería", "perfil", "recomendaciones"]
-        for window in required_windows:
-            if window not in settings_df["window"].values:
-                new_row = {"window": window, "num_movies": 15}
-                settings_df = pd.concat([settings_df, pd.DataFrame([new_row])], ignore_index=True)
-        # Guardar cualquier actualización
+        if  galeria not in settings_df["window"].values:
+            new_row = {"window": galeria, "num_movies": 15}
+            settings_df = pd.concat([settings_df, pd.DataFrame([new_row])], ignore_index=True)
+            # Guardar cualquier actualización
         settings_df.to_csv(settings_path, index=False)
     return settings_df
 
+
+
 # Función para cargar el número de películas de una ventana específica
 def load_saved_num_movies(window_name):
-    settings_df = load_or_initialize_settings()
+    settings_df = load_settings_galeria()
     # Buscar el valor asociado con la ventana
     if window_name in settings_df["window"].values:
         return int(settings_df.loc[settings_df["window"] == window_name, "num_movies"])
@@ -39,7 +39,7 @@ def load_saved_num_movies(window_name):
 
 # Función para guardar el número de películas para una ventana específica
 def save_num_movies(window_name, num_movies):
-    settings_df = load_or_initialize_settings()
+    settings_df = load_settings_galeria()
     if window_name in settings_df["window"].values:
         # Actualizar el valor correspondiente
         settings_df.loc[settings_df["window"] == window_name, "num_movies"] = num_movies

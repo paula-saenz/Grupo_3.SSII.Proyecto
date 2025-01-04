@@ -8,16 +8,13 @@ from sklearn.preprocessing import MinMaxScaler
 data_df = pd.read_csv("CSV/peliculas_limpio.csv")
 data_df_ratings = pd.read_csv("CSV/ratings.csv")
 
-# Crear DataFrame con las calificaciones
-df_ratings = data_df_ratings[["title", "rating"]]
-
 # Crear DataFrame con las características de las películas
 df = data_df[["title", "year", "genre", "director", "writer"]]
 
-# Verificar si el número de filas coincide
-if df.shape[0] != df_ratings.shape[0]:
-    raise ValueError("El número de filas en las películas y las calificaciones no coincide")
+# Asegurar que solo trabajamos con películas filtradas
+df = df[df["title"].isin(data_df_ratings["title"])]
 
+# Rellenar valores nulos
 df["genre"] = df["genre"].fillna("")
 df["director"] = df["director"].fillna("")
 df["writer"] = df["writer"].fillna("")
@@ -43,23 +40,44 @@ matriz_caract = np.hstack((year_en, tfidf_genre, tfidf_director, tfidf_writer))
 matriz_sim = cosine_similarity(matriz_caract)
 similarity_df = pd.DataFrame(matriz_sim, index=df["title"], columns=df["title"])
 
-def recomendar_peli(peli):
-    # Verificar si la película está en el DataFrame
-    if peli not in df_ratings['title'].values:
-        return f"La película '{peli}' no se encuentra en la base de datos."
+def recomendar_peliculas_top_rated(top_n=10):
+    # Filtrar las películas con rating >= 8 (gustos del usuario)
+    peliculas_gustadas = data_df_ratings[data_df_ratings["rating"] >= 8]["title"].values
     
-    # Obtener películas similares
-    similar_movies = similarity_df[peli].sort_values(ascending=False)
+    # Filtrar las películas de df que el usuario ha calificado positivamente
+    df_gustadas = df[df["title"].isin(peliculas_gustadas)]
+    
+    # Crear una lista para almacenar las recomendaciones
+    recomendaciones = []
 
-    # Filtrar solo aquellas con rating igual a 0
-    similar_movies_with_zero_rating = similar_movies[similar_movies.index.isin(df_ratings[df_ratings['rating'] == 0]['title'])]
+    # Seleccionar las películas con rating 0 (no vistas por el usuario)
+    peliculas_sin_rating = data_df_ratings[data_df_ratings["rating"] == 0]["title"].values
+    
+    # Recomendaciones para las películas que el usuario ha calificado positivamente
+    for peli in peliculas_gustadas:
+        if peli in similarity_df.index:
+            # Obtener las películas similares basadas en la similitud
+            similar_movies = similarity_df[peli].sort_values(ascending=False).iloc[1:top_n + 1]
+            
+            # Filtrar las películas similares para que no estén en las ya vistas por el usuario
+            peliculas_recomendadas = similar_movies[similar_movies.index.isin(peliculas_sin_rating)]
+            
+            # Añadir las recomendaciones filtradas a la lista
+            recomendaciones.append(peliculas_recomendadas)
 
-    if not similar_movies_with_zero_rating.empty:
-        return similar_movies_with_zero_rating.head(10)
+    # Verificar si la lista de recomendaciones no está vacía
+    if recomendaciones:
+        # Combinar todas las recomendaciones
+        recomendaciones_df = pd.concat(recomendaciones)
+
+        # Agrupar y ordenar por promedio de similitud
+        recomendaciones_agrupadas = recomendaciones_df.groupby(recomendaciones_df.index).mean()
+        recomendaciones_ordenadas = recomendaciones_agrupadas.sort_values(ascending=False).head(top_n)
+
+        return recomendaciones_ordenadas
     else:
-        return f"No hay películas similares a '{peli}' con rating igual a 0."
+        return "No hay recomendaciones disponibles."
 
 # Ejemplo de uso
-pelicula = "Ant-Man and The Wasp"
-print(f"\nPeliculas similares a: {pelicula}")
-print(recomendar_peli(pelicula))
+print("\nRecomendaciones basadas en tus gustos:")
+print(recomendar_peliculas_top_rated())
