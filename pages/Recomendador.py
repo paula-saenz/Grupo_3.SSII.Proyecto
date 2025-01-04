@@ -9,38 +9,35 @@ import streamlit as st
 from streamlit_star_rating import st_star_rating
 from streamlit_js_eval import streamlit_js_eval
 import os
+from codigos.setting import load_settings_recomendador, load_saved_num_movies_rec
 
 
 # Ruta para almacenar el número de películas seleccionadas
-settings_path = "CSV/settings1.csv"
-
-# Función para cargar el número de películas guardado
-def load_saved_num_movies():
-    if os.path.exists(settings_path):
-        settings_df = pd.read_csv(settings_path)
-        if "num_movies" in settings_df.columns:
-            return int(settings_df["num_movies"])
-    return 15
+settings_path_recomendador = "CSV/settings2.csv"
 
 # Función para guardar el número de películas seleccionado
 def save_num_movies(num_movies):
-    settings_df = pd.DataFrame({"num_movies": [num_movies]})
-    settings_df.to_csv(settings_path, index=False)
-
-# Función para cargar ratings existentes
-def load_existing_ratings():
-    ratings_path = "CSV/ratings.csv"
-    if os.path.exists(ratings_path):
-        ratings_df = pd.read_csv(ratings_path)
-        return dict(zip(ratings_df['title'], ratings_df['rating']))
-    return {}
+    settings_df = load_settings_recomendador()
+    settings_df["num_movies"] = num_movies
+    settings_df.to_csv(settings_path_recomendador, index=False)
 
 # Función para actualizar la lista de películas aleatorias
 def update_random_movies_recomendador():
     st.session_state.recomendador_random_movies = data.sample(n=st.session_state.num_movies)
     save_num_movies(st.session_state.num_movies)  # Guardar el número de películas seleccionado
 
-# Guardar calificaciones en un CSV
+def update_num_movies_rec():
+    save_num_movies(st.session_state.num_movies_select)
+    st.session_state.num_movies = st.session_state.num_movies_select
+
+def load_existing_ratings():
+    ratings_path = "CSV/ratings.csv"
+    if os.path.exists(ratings_path):
+        ratings_df = pd.read_csv(ratings_path)
+        ratings_df = ratings_df[ratings_df['rating'] != 0]
+        return dict(zip(ratings_df['title'], ratings_df['rating']))
+    return {}
+
 def save_ratings_to_csv():
     ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
@@ -58,9 +55,7 @@ def save_ratings_to_csv():
                     [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
                     ignore_index=True,
                 )
-
     ratings_df.to_csv(ratings_path, index=False)
-
 
 
 def main():
@@ -85,7 +80,7 @@ def main():
         ratings_df.to_csv(ratings_path, index=False)
 
     # Cargar número de películas guardado
-    default_num_movies = load_saved_num_movies()
+    default_num_movies = load_saved_num_movies_rec()
     rated_movies = existing_ratings.keys()
     rated_movies_df = data[data['title'].isin(rated_movies)]
 
