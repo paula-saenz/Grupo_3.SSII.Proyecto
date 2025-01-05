@@ -82,28 +82,28 @@ def main():
     existing_ratings = load_existing_ratings()
 
     # Sugerencias dinámicas
-    st.subheader("Búsqueda de películas")
+    st.subheader("Sugerencias dinámicas")
 
-    # Función para filtrar títulos que coinciden con lo escrito
-    def filter_titles(search):
-        return [title for title in data['title'] if search.lower() in title.lower()]
+    # Campo de búsqueda con opciones dinámicas
+    search = st.text_input("Escribe el inicio de una película:", key="search_input")
+    if search:
+        # Filtrar títulos dinámicamente
+        suggestions = [title for title in data['title'] if title.lower().startswith(search.lower())]
+        if suggestions:
+            selected_title = st.selectbox("Resultados coincidentes:", suggestions)
+        else:
+            selected_title = None
+            st.write("No se encontraron películas que comiencen con ese texto.")
 
-    # Campo de búsqueda con multiselect
-    selected_movies = st.multiselect(
-        "Busca y selecciona películas:",
-        options=data['title'].tolist(),
-        key="movie_search"
-    )
+        # Mostrar películas al presionar ENTER
+        if st.button("Buscar"):
+            if selected_title:
+                filtered_movies = data[data['title'] == selected_title]
+            else:
+                filtered_movies = data[data['title'].str.startswith(search, na=False, case=False)]
 
-    # Mostrar películas seleccionadas
-    if selected_movies:
-        st.session_state.auto_random_movies = data[data['title'].isin(selected_movies)]
-        display_movies(st.session_state.auto_random_movies)
-    else:
-        st.write("Selecciona una o más películas para ver los detalles.")
-
-    # Guardar las calificaciones al final de la búsqueda
-    save_ratings_to_csv()
+            display_movies(filtered_movies)
+            save_ratings_to_csv()
 
 if __name__ == "__main__":
     main()

@@ -2,23 +2,28 @@ import pandas as pd
 import streamlit as st
 from streamlit_star_rating import st_star_rating
 import os
-from codigos.setting import load_settings_perfil, load_saved_num_movies_per
-from codigos.recomendacion_perfil import recomendar_peliculas_top_rated
+from codigos.recomendaciones_perfil import load_and_prepare_data, create_similarity_matrix, recomendar_peliculas_top_rated
 
-# Ruta para almacenar el número de películas seleccionadas
-settings_path_perfil = "CSV/settings1.csv"
+def load_settings_perfil():
+    settings_path_perfil = "CSV/settings1.csv"
+    if os.path.exists(settings_path_perfil):
+        return pd.read_csv(settings_path_perfil)
+    else:
+        return pd.DataFrame({"num_movies": [10]})
 
-# Función para guardar el número de películas seleccionado
+def load_saved_num_movies_per():
+    settings_df = load_settings_perfil()
+    return settings_df["num_movies"].iloc[0]
+
 def save_num_movies(num_movies):
     settings_df = load_settings_perfil()
     settings_df["num_movies"] = num_movies
-    settings_df.to_csv(settings_path_perfil, index=False)
-
+    settings_df.to_csv("CSV/settings1.csv", index=False)
 
 def update_num_movies_per():
     save_num_movies(st.session_state.num_movies_select)
     st.session_state.num_movies = st.session_state.num_movies_select
-    st.session_state.current_page = 1  # Resetear la página al cambiar el número de películas
+    st.session_state.current_page = 1
 
 def load_existing_ratings():
     ratings_path = "CSV/ratings.csv"
@@ -47,19 +52,20 @@ def save_ratings_to_csv():
                 )
     ratings_df.to_csv(ratings_path, index=False)
 
-
-
 def main():
     st.set_page_config(layout="wide")
     st.title("Galería de Películas Recomendadas")
 
+    # Cargar y preparar los datos
+    df, data_df_ratings = load_and_prepare_data()
+    similarity_df = create_similarity_matrix(df)
+
     file_path = "CSV/peliculas_limpio.csv"
     image_links_path = "CSV/link_imagenes.csv"
     ratings_valorado_path = "CSV/ratings.csv"
-    global data
+    
     data = pd.read_csv(file_path)
     image_links = pd.read_csv(image_links_path)
-
     data = pd.merge(data, image_links, on="title", how="left")
 
     existing_ratings = load_existing_ratings()
@@ -80,9 +86,14 @@ def main():
         key="num_movies_select",
         on_change=update_num_movies_per
     )
-    
-    recomendaciones = recomendar_peliculas_top_rated(top_n=st.session_state.num_movies)
 
+    # Llamada a la función de recomendación
+    recomendaciones = recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n=st.session_state.num_movies)
+
+    # Combinar las recomendaciones con la información de las películas
+    recomendaciones = recomendaciones.reset_index().merge(data, on="title", how="left")
+
+    # Manejo de la paginación
     num_movies = st.session_state.num_movies
     total_pages = (len(recomendaciones) + num_movies - 1) // num_movies
     if "current_page" not in st.session_state:
@@ -98,17 +109,17 @@ def main():
     with col2:
         st.write(f"Página {st.session_state.current_page} de {total_pages}")
 
+    # Dividir las películas en páginas
     start_idx = (st.session_state.current_page - 1) * num_movies
     end_idx = start_idx + num_movies
     page_movies_df = recomendaciones.iloc[start_idx:end_idx]
 
+    # Mostrar las películas en una cuadrícula
     colums = 5
     grid = [page_movies_df.iloc[i:i+colums] for i in range(0, len(page_movies_df), colums)]
-
     for row in grid:
         cols = st.columns(colums)
-        for i, movie in enumerate(row.iterrows()):
-            movie = movie[1]
+        for i, (_, movie) in enumerate(row.iterrows()):
             movie_key = f"rating_{movie['title']}"
 
             if movie_key not in st.session_state:
@@ -130,7 +141,7 @@ def main():
                     defaultValue=st.session_state[movie_key],
                     key=movie_key,
                 )
-    
+
     save_ratings_to_csv()
 
 if __name__ == "__main__":
