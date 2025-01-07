@@ -2,133 +2,63 @@ import pandas as pd
 import streamlit as st
 from streamlit_star_rating import st_star_rating
 import os
-from codigos.setting import load_settings_galeria, load_saved_num_movies_gal
-
-settings_path_galeria = "CSV/settings.csv"
-
-def save_num_movies(num_movies):
-    settings_df = load_settings_galeria()
-    settings_df["num_movies"] = num_movies
-    settings_df.to_csv(settings_path_galeria, index=False)
-
-def update_num_movies():
-    save_num_movies(st.session_state.num_movies_select)
-    st.session_state.num_movies = st.session_state.num_movies_select
-
-def load_existing_ratings():
-    ratings_path = "CSV/ratings.csv"
-    if os.path.exists(ratings_path):
-        ratings_df = pd.read_csv(ratings_path)
-        ratings_df = ratings_df[ratings_df['rating'] != 0]
-        return dict(zip(ratings_df['title'], ratings_df['rating']))
-    return {}
-
-def save_ratings_to_csv():
-    ratings_path = "CSV/ratings.csv"
-    if os.path.exists(ratings_path):
-        ratings_df = pd.read_csv(ratings_path)
-    else:
-        ratings_df = pd.DataFrame(columns=["title", "rating"])
-
-    for key, value in st.session_state.items():
-        if key.startswith("rating_"):
-            title = key.replace("rating_", "")
-            if title in ratings_df["title"].values:
-                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
-            else:
-                ratings_df = pd.concat(
-                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
-                    ignore_index=True,
-                )
-    ratings_df.to_csv(ratings_path, index=False)
+from codigos.Control_VISTA import num_pelis, paginas_caratulas, vista
+from codigos.Control_CSV import ratings, CSV
 
 
 def main():
     st.set_page_config(layout="wide")
     st.title("Galería")
 
-    file_path = "CSV/peliculas_limpio.csv"
-    image_links_path = "CSV/link_imagenes.csv"
-    ratings_valorado_path = "CSV/ratings.csv"
-    global data
-    data = pd.read_csv(file_path)
-    image_links = pd.read_csv(image_links_path)
+    # Cargar todos los csv
+    peliculas_limpio_csv = CSV.PELICULAS_LIMPIO_CSV()
+    link_imagenes_csv = CSV.LINK_IMAGENES_CSV()
+    ratings_csv = CSV.RATINGS_CSV()
+    peliculas = pd.read_csv(peliculas_limpio_csv)
+    link_imagenes = pd.read_csv(link_imagenes_csv)
 
-    data = pd.merge(data, image_links, on="title", how="left")
+    peliculas = pd.merge(peliculas, link_imagenes, on="title", how="left")
 
-    existing_ratings = load_existing_ratings()
+    hay_ratings = ratings.CARGAR_RATINGS()
 
-    if not os.path.exists(ratings_valorado_path):
-        ratings_df = data[["title"]].copy()
+    if not os.path.exists(ratings_csv):
+        ratings_df = peliculas[["title"]].copy()
         ratings_df["rating"] = 0
-        ratings_df.to_csv(ratings_valorado_path, index=False)
+        ratings_df.to_csv(ratings_csv, index=False)
 
-    default_num_movies = load_saved_num_movies_gal()
-    if "num_movies" not in st.session_state:
-        st.session_state.num_movies = default_num_movies
+    numero_pelis_inicio = num_pelis.galeria.CARGAR_NUM_GALERIA()
+    if "num_movies_galeria" not in st.session_state:
+        st.session_state.num_movies_galeria = numero_pelis_inicio
 
     st.selectbox(
         label="Selecciona el número de películas a mostrar",
         options=[5, 10, 15, 20, 25, 30],
-        index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == st.session_state.num_movies][0],
-        key="num_movies_select",
-        on_change=update_num_movies
+        index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == st.session_state.num_movies_galeria][0],
+        key="num_movies_select_galeria",
+        on_change=num_pelis.galeria.ACTUALIZAR_NUM_PELIS_GALERIA
     )
 
-    rated_movies = existing_ratings.keys()
-    rated_movies_df = data[data['title'].isin(rated_movies)]
+    peliculas_con_valor = hay_ratings.keys()
+    peliculas_con_valor_df = peliculas[peliculas['title'].isin(peliculas_con_valor)]
 
-    st.write(f"Total de películas valoradas: {len(rated_movies_df)}")
+    peliculas_con_valor_df = peliculas_con_valor_df[peliculas_con_valor_df['title'].isin([title for title, rating in hay_ratings.items() if rating > 0])]
 
-    num_movies = st.session_state.num_movies
-    total_pages = (len(rated_movies_df) + num_movies - 1) // num_movies
+    st.write(f"Total de películas valoradas: {len(peliculas_con_valor_df)}")
+
+    num_movies_galeria = st.session_state.num_movies_galeria
+    paginacion = (len(peliculas_con_valor_df) + num_movies_galeria - 1) // num_movies_galeria
     if "current_page" not in st.session_state:
         st.session_state.current_page = 1
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        if st.button("⬅️ Anterior") and st.session_state.current_page > 1:
-            st.session_state.current_page -= 1
-    with col3:
-        if st.button("➡️ Siguiente") and st.session_state.current_page < total_pages:
-            st.session_state.current_page += 1
-    with col2:
-        st.write(f"Página {st.session_state.current_page} de {total_pages}")
+    paginas_caratulas.PAGINAS(paginacion)
 
-    start_idx = (st.session_state.current_page - 1) * num_movies
-    end_idx = start_idx + num_movies
-    page_movies_df = rated_movies_df.iloc[start_idx:end_idx]
+    start_idx = (st.session_state.current_page - 1) * num_movies_galeria
+    end_idx = start_idx + num_movies_galeria
+    page_movies_df = peliculas_con_valor_df.iloc[start_idx:end_idx]
 
-    colums = 5
-    grid = [page_movies_df.iloc[i:i+colums] for i in range(0, len(page_movies_df), colums)]
+    vista.VISTA_PELICULAS(page_movies_df)
 
-    for row in grid:
-        cols = st.columns(colums)
-        for i, movie in enumerate(row.iterrows()):
-            movie = movie[1]
-            movie_key = f"rating_{movie['title']}"
-
-            if movie_key not in st.session_state:
-                st.session_state[movie_key] = existing_ratings.get(movie['title'], 0)
-
-            with cols[i]:
-                st.subheader(movie["title"])
-                if pd.notna(movie["imagen"]):
-                    st.image(movie["imagen"], use_container_width=True)
-                else:
-                    st.write("Imagen no disponible")
-
-                st.write(f"Género: {movie['genre']}")
-                st.write(f"Año: {movie['year']}")
-
-                rating = st_star_rating(
-                    label="",
-                    maxValue=10,
-                    defaultValue=st.session_state[movie_key],
-                    key=movie_key,
-                )
-
-    save_ratings_to_csv()
+    ratings.GUARDAR_RATINGS()
 
 if __name__ == "__main__":
     main()

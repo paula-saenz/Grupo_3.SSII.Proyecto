@@ -3,27 +3,7 @@ import streamlit as st
 from streamlit_star_rating import st_star_rating
 import os
 from codigos.recomendaciones_perfil import load_and_prepare_data, create_similarity_matrix, recomendar_peliculas_top_rated
-
-def load_settings_perfil():
-    settings_path_perfil = "CSV/settings1.csv"
-    if os.path.exists(settings_path_perfil):
-        return pd.read_csv(settings_path_perfil)
-    else:
-        return pd.DataFrame({"num_movies": [10]})
-
-def load_saved_num_movies_per():
-    settings_df = load_settings_perfil()
-    return settings_df["num_movies"].iloc[0]
-
-def save_num_movies(num_movies):
-    settings_df = load_settings_perfil()
-    settings_df["num_movies"] = num_movies
-    settings_df.to_csv("CSV/settings1.csv", index=False)
-
-def update_num_movies_per():
-    save_num_movies(st.session_state.num_movies_select)
-    st.session_state.num_movies = st.session_state.num_movies_select
-    st.session_state.current_page = 1
+from codigos.Control_VISTA import paginas_caratulas, vista, num_pelis
 
 def load_existing_ratings():
     ratings_path = "CSV/ratings.csv"
@@ -33,6 +13,21 @@ def load_existing_ratings():
         return dict(zip(ratings_df['title'], ratings_df['rating']))
     return {}
 
+def update_rating(title, rating):
+    # Asegurarse de que 'title' sea un string para evitar problemas con claves no hashables
+    title = str(title)
+
+    # Verificar que el rating sea un número (entero o flotante)
+    if isinstance(rating, (int, float)):
+        # Actualizar el rating en session_state
+        st.session_state[f"rating_{title}"] = rating
+        # También actualizar en 'existing_ratings'
+        if 'existing_ratings' not in st.session_state:
+            st.session_state.existing_ratings = {}
+        st.session_state.existing_ratings[title] = rating
+    else:
+        st.error("El valor de rating debe ser un número (int o float).")
+
 def save_ratings_to_csv():
     ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
@@ -40,38 +35,48 @@ def save_ratings_to_csv():
     else:
         ratings_df = pd.DataFrame(columns=["title", "rating"])
 
+    # Iterar sobre el session_state para obtener las calificaciones
     for key, value in st.session_state.items():
-        if key.startswith("rating_"):
-            title = key.replace("rating_", "")
-            if title in ratings_df["title"].values:
-                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
-            else:
-                ratings_df = pd.concat(
-                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
-                    ignore_index=True,
-                )
+        if key.startswith("rating_"):  # Filtrar las claves que corresponden a ratings
+            title = key.replace("rating_", "")  # Extraer el título
+            if isinstance(value, (int, float)):  # Asegurarse de que el valor sea numérico
+                # Verificar si ya existe el título en el DataFrame
+                if title in ratings_df["title"].values:
+                    ratings_df.loc[ratings_df["title"] == title, "rating"] = value
+                else:
+                    ratings_df = pd.concat(
+                        [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
+                        ignore_index=True,
+                    )
     ratings_df.to_csv(ratings_path, index=False)
 
-def update_random_movies_auto():
-    st.session_state.auto_random_movies = data.sample(n=st.session_state.num_movies)
-    save_num_movies(st.session_state.num_movies)  # Guardar el número de películas seleccionado
 
-def get_recommendations(similarity_df, data_df_ratings, data, num_movies):
+def update_random_movies_auto():
+    st.session_state.auto_random_movies = data.sample(n=st.session_state.num_movies_perfil)
+    num_pelis.perfil.GUARDAR_NUM_PELIS_PERFIL(st.session_state.num_movies_perfil)  # Guardar el número de películas seleccionado
+
+def get_recommendations(similarity_df, data_df_ratings, data, num_movies_perfil):
     existing_ratings = load_existing_ratings()
     rated_movies = [title for title, rating in existing_ratings.items() if rating > 0]
 
     if rated_movies:
-        recomendaciones = recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n=num_movies)
+        recomendaciones = recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n=num_movies_perfil)
+        if recomendaciones.empty:
+            return data.sample(n=num_movies_perfil)
         recomendaciones = recomendaciones.reset_index().merge(data, on="title", how="left")
     else:
-        st.warning("No hay películas calificadas. Mostrando películas aleatorias.")
-        recomendaciones = data.sample(n=num_movies)
+        recomendaciones = data.sample(n=num_movies_perfil)
 
     return recomendaciones
 
 def main():
     st.set_page_config(layout="wide")
-    st.title("Galería de Películas Recomendadas")
+    st.title("PERFIL")
+
+    if 'rating_peli' not in st.session_state:
+        st.session_state.rating_peli = load_existing_ratings()
+
+    st.dataframe(st.session_state.rating_peli)
 
     # Cargar y preparar los datos
     df, data_df_ratings = load_and_prepare_data()
@@ -86,77 +91,46 @@ def main():
     image_links = pd.read_csv(image_links_path)
     data = pd.merge(data, image_links, on="title", how="left")
 
+    peliculas_no_votadas = data[~data['title'].isin(st.session_state.rating_peli.keys()) | (data['title'].isin(st.session_state.rating_peli.keys()) & (st.session_state.rating_peli.values() == 0))]
+
+
     if not os.path.exists(ratings_valorado_path):
         ratings_df = data[["title"]].copy()
         ratings_df["rating"] = 0
         ratings_df.to_csv(ratings_valorado_path, index=False)
 
-    default_num_movies = load_saved_num_movies_per()
-    if "num_movies" not in st.session_state:
-        st.session_state.num_movies = default_num_movies
+    default_num_movies = num_pelis.perfil.CARGAR_NUM_PERFIL()
+    if "num_movies_perfil" not in st.session_state:
+        st.session_state.num_movies_perfil = default_num_movies
 
     st.selectbox(
         label="Selecciona el número de películas a mostrar",
         options=[5, 10, 15, 20, 25, 30],
-        index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == st.session_state.num_movies][0],
-        key="num_movies_select",
-        on_change=update_num_movies_per
+        index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == st.session_state.num_movies_perfil][0],
+        key="num_movies_select_perfil",
+        on_change=num_pelis.perfil.ACTUALIZAR_NUM_PELIS_PERFIL
     )
 
     if "recomendaciones" not in st.session_state or st.button("Actualizar recomendaciones"):
-        st.session_state.recomendaciones = get_recommendations(similarity_df, data_df_ratings, data, st.session_state.num_movies)
+        st.session_state.recomendaciones = get_recommendations(similarity_df, data_df_ratings, peliculas_no_votadas, st.session_state.num_movies_perfil)
 
     recomendaciones = st.session_state.recomendaciones
 
     # Manejo de la paginación
-    num_movies = st.session_state.num_movies
-    total_pages = (len(recomendaciones) + num_movies - 1) // num_movies
+    num_movies_perfil = st.session_state.num_movies_perfil
+    total_pages = (len(recomendaciones) + num_movies_perfil - 1) // num_movies_perfil
     if "current_page" not in st.session_state:
         st.session_state.current_page = 1
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        if st.button("⬅️ Anterior") and st.session_state.current_page > 1:
-            st.session_state.current_page -= 1
-    with col3:
-        if st.button("➡️ Siguiente") and st.session_state.current_page < total_pages:
-            st.session_state.current_page += 1
-    with col2:
-        st.write(f"Página {st.session_state.current_page} de {total_pages}")
+    paginas_caratulas.PAGINAS(total_pages)
 
     # Dividir las películas en páginas
-    start_idx = (st.session_state.current_page - 1) * num_movies
-    end_idx = start_idx + num_movies
+    start_idx = (st.session_state.current_page - 1) * num_movies_perfil
+    end_idx = start_idx + num_movies_perfil
     page_movies_df = recomendaciones.iloc[start_idx:end_idx]
 
     # Mostrar las películas en una cuadrícula
-    colums = 5
-    grid = [page_movies_df.iloc[i:i+colums] for i in range(0, len(page_movies_df), colums)]
-    for row in grid:
-        cols = st.columns(colums)
-        for i, (_, movie) in enumerate(row.iterrows()):
-            movie_key = f"rating_{movie['title']}"
-
-            if movie_key not in st.session_state:
-                st.session_state[movie_key] = load_existing_ratings().get(movie['title'], 0)
-
-            with cols[i]:
-                st.subheader(movie["title"])
-                if pd.notna(movie["imagen"]):
-                    st.image(movie["imagen"], use_container_width=True)
-                else:
-                    st.write("Imagen no disponible")
-
-                st.write(f"Género: {movie['genre']}")
-                st.write(f"Año: {movie['year']}")
-
-                rating = st_star_rating(
-                    label="",
-                    maxValue=10,
-                    defaultValue=st.session_state[movie_key],
-                    key=movie_key,
-                )
-
+    vista.VISTA_PELICULAS(page_movies_df)
     save_ratings_to_csv()
 
 if __name__ == "__main__":

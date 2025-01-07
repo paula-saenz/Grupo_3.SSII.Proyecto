@@ -9,33 +9,52 @@ file_path = "CSV/peliculas_limpio.csv"
 image_links_path = "CSV/link_imagenes.csv"
 ratings_path = "CSV/ratings.csv"
 
-@st.cache_data
 def load_movie_data():
     return load_data(file_path, image_links_path)
 
 def load_existing_ratings():
+    ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
         ratings_df = ratings_df[ratings_df['rating'] != 0]
         return dict(zip(ratings_df['title'], ratings_df['rating']))
     return {}
 
+def update_rating(title, rating):
+    # Asegurarse de que 'title' sea un string para evitar problemas con claves no hashables
+    title = str(title)
+
+    # Verificar que el rating sea un número (entero o flotante)
+    if isinstance(rating, (int, float)):
+        # Actualizar el rating en session_state
+        st.session_state[f"rating_{title}"] = rating
+        # También actualizar en 'existing_ratings'
+        if 'existing_ratings' not in st.session_state:
+            st.session_state.existing_ratings = {}
+        st.session_state.existing_ratings[title] = rating
+    else:
+        st.error("El valor de rating debe ser un número (int o float).")
+
 def save_ratings_to_csv():
+    ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
     else:
         ratings_df = pd.DataFrame(columns=["title", "rating"])
 
+    # Iterar sobre el session_state para obtener las calificaciones
     for key, value in st.session_state.items():
-        if key.startswith("rating_"):
-            title = key.replace("rating_", "")
-            if title in ratings_df["title"].values:
-                ratings_df.loc[ratings_df["title"] == title, "rating"] = value
-            else:
-                ratings_df = pd.concat(
-                    [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
-                    ignore_index=True,
-                )
+        if key.startswith("rating_"):  # Filtrar las claves que corresponden a ratings
+            title = key.replace("rating_", "")  # Extraer el título
+            if isinstance(value, (int, float)):  # Asegurarse de que el valor sea numérico
+                # Verificar si ya existe el título en el DataFrame
+                if title in ratings_df["title"].values:
+                    ratings_df.loc[ratings_df["title"] == title, "rating"] = value
+                else:
+                    ratings_df = pd.concat(
+                        [ratings_df, pd.DataFrame([{"title": title, "rating": value}])],
+                        ignore_index=True,
+                    )
     ratings_df.to_csv(ratings_path, index=False)
 
 def display_movies(movies):

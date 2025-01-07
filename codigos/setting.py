@@ -6,7 +6,7 @@ import os
 # Ruta para almacenar los ajustes de las ventanas
 settings_path_galeria = "CSV/settings.csv"
 
-def load_settings_galeria():
+def GUARDAR_SETTINGS_GALERIA():
     if not os.path.exists(settings_path_galeria):
         settings_df = pd.DataFrame({"num_movies": [15]})
         settings_df.to_csv(settings_path_galeria, index=False)
@@ -14,8 +14,8 @@ def load_settings_galeria():
         settings_df = pd.read_csv(settings_path_galeria)
     return settings_df
 
-def load_saved_num_movies_gal():
-    settings_df = load_settings_galeria()
+def CARGAR_SETTINGS_GALERIA():
+    settings_df = GUARDAR_SETTINGS_GALERIA()
     return int(settings_df["num_movies"].iloc[0])
 
 

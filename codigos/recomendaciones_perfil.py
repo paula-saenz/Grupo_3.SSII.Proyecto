@@ -33,7 +33,7 @@ def create_similarity_matrix(df):
     matriz_sim = cosine_similarity(matriz_caract)
     return pd.DataFrame(matriz_sim, index=df["title"], columns=df["title"])
 
-def recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n=10):
+def recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n):
     peliculas_gustadas = data_df_ratings[data_df_ratings["rating"] >= 8]["title"].values
     peliculas_sin_rating = data_df_ratings[data_df_ratings["rating"] == 0]["title"].values
     
@@ -50,3 +50,6 @@ def recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n=10):
         return recomendaciones_agrupadas.sort_values(ascending=False).head(top_n)
     else:
         return pd.DataFrame()
+    
+    
+    
