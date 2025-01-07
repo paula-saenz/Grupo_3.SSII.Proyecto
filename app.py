@@ -17,16 +17,22 @@ def update_rating(title, rating):
     # Asegurarse de que 'title' sea un string para evitar problemas con claves no hashables
     title = str(title)
 
-    # Verificar que el rating sea un número (entero o flotante)
-    if isinstance(rating, (int, float)):
-        # Actualizar el rating en session_state
-        st.session_state[f"rating_{title}"] = rating
-        # También actualizar en 'existing_ratings'
-        if 'existing_ratings' not in st.session_state:
-            st.session_state.existing_ratings = {}
-        st.session_state.existing_ratings[title] = rating
+    # Verificar que el rating sea un número (entero o flotante), si es nulo lo ponemos en 0
+    if rating is None:
+        rating = 0
+    elif isinstance(rating, (int, float)) and rating >= 0:
+        pass  # Si es un número válido, lo dejamos tal cual
     else:
         st.error("El valor de rating debe ser un número (int o float).")
+
+    # Guardar el rating en session_state
+    st.session_state[f"rating_{title}"] = rating
+    
+    # También actualizar en 'existing_ratings' para uso posterior
+    if 'existing_ratings' not in st.session_state:
+        st.session_state.existing_ratings = {}
+    st.session_state.existing_ratings[title] = rating
+
 
 def save_ratings_to_csv():
     ratings_path = "CSV/ratings.csv"
