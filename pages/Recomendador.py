@@ -13,7 +13,6 @@ def load_movie_data():
     return load_data(file_path, image_links_path)
 
 def load_existing_ratings():
-    ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
         ratings_df = ratings_df[ratings_df['rating'] != 0]
@@ -21,14 +20,9 @@ def load_existing_ratings():
     return {}
 
 def update_rating(title, rating):
-    # Asegurarse de que 'title' sea un string para evitar problemas con claves no hashables
     title = str(title)
-
-    # Verificar que el rating sea un número (entero o flotante)
     if isinstance(rating, (int, float)):
-        # Actualizar el rating en session_state
         st.session_state[f"rating_{title}"] = rating
-        # También actualizar en 'existing_ratings'
         if 'existing_ratings' not in st.session_state:
             st.session_state.existing_ratings = {}
         st.session_state.existing_ratings[title] = rating
@@ -36,18 +30,15 @@ def update_rating(title, rating):
         st.error("El valor de rating debe ser un número (int o float).")
 
 def save_ratings_to_csv():
-    ratings_path = "CSV/ratings.csv"
     if os.path.exists(ratings_path):
         ratings_df = pd.read_csv(ratings_path)
     else:
         ratings_df = pd.DataFrame(columns=["title", "rating"])
 
-    # Iterar sobre el session_state para obtener las calificaciones
     for key, value in st.session_state.items():
-        if key.startswith("rating_"):  # Filtrar las claves que corresponden a ratings
-            title = key.replace("rating_", "")  # Extraer el título
-            if isinstance(value, (int, float)):  # Asegurarse de que el valor sea numérico
-                # Verificar si ya existe el título en el DataFrame
+        if key.startswith("rating_"):
+            title = key.replace("rating_", "")
+            if isinstance(value, (int, float)):
                 if title in ratings_df["title"].values:
                     ratings_df.loc[ratings_df["title"] == title, "rating"] = value
                 else:
@@ -85,25 +76,47 @@ def display_movies(movies):
                     key=movie_key,
                 )
 
+# Función para ejecutar cuando se detecta un cambio de página
+def on_page_change():
+    st.write("Página cargada por primera vez")
+    st.session_state.page_changed = False  # Reseteamos el estado
 
 def main():
     st.set_page_config(layout="wide")
     st.title("Recomendador de Películas Similares")
 
     global data, tfidf_matrix, existing_ratings
+
+    # Inicialización de variables de estado
+    if "page_changed" not in st.session_state:
+        st.session_state.page_changed = True
+    if "current_movie" not in st.session_state:
+        st.session_state.current_movie = None
+
+    # Cargar datos
     data, tfidf_matrix = load_movie_data()
     existing_ratings = load_existing_ratings()
 
+    # Selección de película
     selected_movie = st.selectbox(
         "Selecciona una película:",
         options=data['title'].tolist(),
         key="movie_search"
     )
 
+    # Detección de cambio de película seleccionada
+    if selected_movie != st.session_state.current_movie:
+        st.session_state.current_movie = selected_movie
+        st.session_state.page_changed = True
+
+    # Ejecución en caso de cambio
+    if st.session_state.page_changed:
+        on_page_change()
+
     num_recommendations = st.selectbox(
         "Número de recomendaciones:",
         options=[5, 10, 15, 20, 25, 30],
-        index=1 
+        index=1
     )
 
     if selected_movie:
@@ -112,10 +125,9 @@ def main():
         
         if similar_movies:
             st.subheader(f"Películas similares a '{selected_movie}':")
-            display_movies(similar_movies)  # Pasamos directamente similar_movies
+            display_movies(similar_movies)
     else:
         st.write("No se encontraron películas similares.")
-
 
     save_ratings_to_csv()
 
