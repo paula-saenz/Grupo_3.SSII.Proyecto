@@ -122,7 +122,7 @@ def main():
     if selected_movie:
         st.write(f"Película seleccionada: {selected_movie}")
         similar_movies = find_similar_movies(selected_movie, data, tfidf_matrix, num_recommendations)
-        
+
         if similar_movies:
             st.subheader(f"Películas similares a '{selected_movie}':")
             display_movies(similar_movies)
