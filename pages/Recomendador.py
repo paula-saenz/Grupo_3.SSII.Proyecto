@@ -3,6 +3,8 @@ from streamlit_star_rating import st_star_rating
 import pandas as pd
 import os
 from codigos.pln_sinopsis import load_data, find_similar_movies
+from codigos.Control_VISTA import num_pelis
+from codigos.Control_CSV import ratings
 
 # File paths
 file_path = "CSV/peliculas_limpio.csv"
@@ -76,11 +78,6 @@ def display_movies(movies):
                     key=movie_key,
                 )
 
-# Función para ejecutar cuando se detecta un cambio de página
-def on_page_change():
-    st.write("Página cargada por primera vez")
-    st.session_state.page_changed = False  # Reseteamos el estado
-
 def main():
     st.set_page_config(layout="wide")
     st.title("Recomendador de Películas Similares")
@@ -97,6 +94,10 @@ def main():
     data, tfidf_matrix = load_movie_data()
     existing_ratings = load_existing_ratings()
 
+    numero_pelis_inicio = num_pelis.galeria.CARGAR_NUM_GALERIA()
+    if "num_movies_recomendador" not in st.session_state:
+        st.session_state.num_movies_recomendador = numero_pelis_inicio
+
     # Selección de película
     selected_movie = st.selectbox(
         "Selecciona una película:",
@@ -109,14 +110,12 @@ def main():
         st.session_state.current_movie = selected_movie
         st.session_state.page_changed = True
 
-    # Ejecución en caso de cambio
-    if st.session_state.page_changed:
-        on_page_change()
-
     num_recommendations = st.selectbox(
-        "Número de recomendaciones:",
+        label="Selecciona el número de películas a mostrar",
         options=[5, 10, 15, 20, 25, 30],
-        index=1
+        index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == st.session_state.num_movies_recomendador][0],
+        key="num_movies_select_recomendador",
+        on_change=num_pelis.recomendador.ACTUALIZAR_NUM_PELIS_RECOMENDADOR
     )
 
     if selected_movie:
@@ -129,7 +128,7 @@ def main():
     else:
         st.write("No se encontraron películas similares.")
 
-    save_ratings_to_csv()
+    ratings.GUARDAR_RATINGS()
 
 if __name__ == "__main__":
     main()

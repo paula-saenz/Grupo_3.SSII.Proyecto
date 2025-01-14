@@ -67,60 +67,59 @@ class vista:
 
 # CREACIÓN DE LA CLASE "NUM_PELIS"
 class num_pelis:
-    class perfil:
-        def GUARDAR_NUM_PELIS_PERFIL(num_movies_perfil):
-            settings_df = num_pelis.perfil.GUARDAR_NUM_PERFIL()
-            settings_df["num_movies_perfil"] = num_movies_perfil
-            settings_df.to_csv(CSV.SETTINGS1_CSV(), index=False)    
+    def GUARDAR_CONFIGURACION(tipo, valor):
+        """Guarda la configuración en el archivo único CSV."""
+        settings_csv = CSV.SETTINGS_CSV()
+        if not os.path.exists(settings_csv):
+            settings_df = pd.DataFrame({"tipo": [tipo], "valor": [valor]})
+        else:
+            settings_df = pd.read_csv(settings_csv)
+            if tipo in settings_df["tipo"].values:
+                settings_df.loc[settings_df["tipo"] == tipo, "valor"] = valor
+            else:
+                settings_df = pd.concat([settings_df, pd.DataFrame({"tipo": [tipo], "valor": [valor]})])
+        settings_df.to_csv(settings_csv, index=False)
 
-            # CREACIÓN DE LA FUNCIÓN "ACTUALIZAR_NUM_PELIS"
+    def CARGAR_CONFIGURACION(tipo, valor_default):
+        """Carga la configuración desde el archivo único CSV."""
+        settings_csv = CSV.SETTINGS_CSV()
+        if not os.path.exists(settings_csv):
+            num_pelis.GUARDAR_CONFIGURACION(tipo, valor_default)
+            return valor_default
+        settings_df = pd.read_csv(settings_csv)
+        if tipo in settings_df["tipo"].values:
+            return int(settings_df.loc[settings_df["tipo"] == tipo, "valor"].values[0])
+        else:
+            num_pelis.GUARDAR_CONFIGURACION(tipo, valor_default)
+            return valor_default
+
+    class perfil:
         def ACTUALIZAR_NUM_PELIS_PERFIL():
-            num_pelis.perfil.GUARDAR_NUM_PELIS_PERFIL(st.session_state.num_movies_select_perfil)
+            num_pelis.GUARDAR_CONFIGURACION("perfil", st.session_state.num_movies_select_perfil)
             st.session_state.num_movies_perfil = st.session_state.num_movies_select_perfil
 
-        def GUARDAR_NUM_PERFIL():
-            if not os.path.exists(CSV.SETTINGS1_CSV()):
-                settings_df = pd.DataFrame({"num_movies_perfil": [15]})
-                settings_df.to_csv(CSV.SETTINGS1_CSV(), index=False)
-            else:
-                settings_df = pd.read_csv(CSV.SETTINGS1_CSV())
-            return settings_df
-
-        # CREACIÓN DE LA FUNCIÓN "CARGAR_NUM_GALERIA"
         def CARGAR_NUM_PERFIL():
-            settings_df = num_pelis.perfil.GUARDAR_NUM_PERFIL()
-            return int(settings_df["num_movies_perfil"].iloc[0])
+            return num_pelis.CARGAR_CONFIGURACION("perfil", 15)
 
-    # CREACIÓN DE LA SUBCLASE "GALERÍA"
     class galeria:
-        
-        # CREACIÓN DE LA FUNCIÓN "GUARDAR_NUM_PELIS" CON EL PARÁMETRO "NUM_MOVIES" INDICANDO EL NÚMERO DE PELÍCULAS VISIBLES MÁXIMAS EN VENTANA
-        def GUARDAR_NUM_PELIS_GALERIA(num_movies_galeria):
-            settings_df = num_pelis.galeria.GUARDAR_NUM_GALERIA()
-            settings_df["num_movies_galeria"] = num_movies_galeria
-            settings_df.to_csv(CSV.SETTINGS_CSV(), index=False)
-
-        # CREACIÓN DE LA FUNCIÓN "ACTUALIZAR_NUM_PELIS"
         def ACTUALIZAR_NUM_PELIS_GALERIA():
-            num_pelis.galeria.GUARDAR_NUM_PELIS_GALERIA(st.session_state.num_movies_select_galeria)
+            num_pelis.GUARDAR_CONFIGURACION("galeria", st.session_state.num_movies_select_galeria)
             st.session_state.num_movies_galeria = st.session_state.num_movies_select_galeria
 
-        # CREACIÓN DE LA FUNCIÓN "GUARDAR_NUM_GALERIA"
-        def GUARDAR_NUM_GALERIA():
-            if not os.path.exists(CSV.SETTINGS_CSV()):
-                settings_df = pd.DataFrame({"num_movies_galeria": [15]})
-                settings_df.to_csv(CSV.SETTINGS_CSV(), index=False)
-            else:
-                settings_df = pd.read_csv(CSV.SETTINGS_CSV())
-            return settings_df
-
-        # CREACIÓN DE LA FUNCIÓN "CARGAR_NUM_GALERIA"
         def CARGAR_NUM_GALERIA():
-            settings_df = num_pelis.galeria.GUARDAR_NUM_GALERIA()
-            return int(settings_df["num_movies_galeria"].iloc[0])
+            return num_pelis.CARGAR_CONFIGURACION("galeria", 15)
+        
+    class recomendador:
+        def ACTUALIZAR_NUM_PELIS_RECOMENDADOR():
+            num_pelis.GUARDAR_CONFIGURACION("recomendador", st.session_state.num_movies_select_recomendador)
+            st.session_state.num_movies_recomendador = st.session_state.num_movies_select_recomendador
+
+        def CARGAR_NUM_RECOMENDADOR():
+            return num_pelis.CARGAR_CONFIGURACION("recomendador", 15)
+
         
 class paginas_caratulas:
-    def PAGINAS(paginacion):
+    def PAGINAS(paginacion, on_change = None):
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             if st.button("⬅️ Anterior") and st.session_state.current_page > 1:

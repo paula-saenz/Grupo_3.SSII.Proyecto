@@ -37,6 +37,7 @@ def main():
     if "num_movies_galeria" not in st.session_state:
         st.session_state.num_movies_galeria = numero_pelis_inicio
 
+
     st.selectbox(
         label="Selecciona el número de películas a mostrar",
         options=[5, 10, 15, 20, 25, 30],
@@ -59,6 +60,7 @@ def main():
     page_movies_df = peliculas_con_valor_df.iloc[start_idx:end_idx]
 
     vista.VISTA_PELICULAS(page_movies_df)
+    ratings.GUARDAR_RATINGS()
 
 if __name__ == "__main__":
     main()

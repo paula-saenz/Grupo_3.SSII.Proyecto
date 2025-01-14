@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from codigos.pln_sinopsis import load_data, find_similar_movies
 from codigos.Control_VISTA import vista
+from codigos.Control_CSV import ratings, csv
 
 # File paths
 file_path = "CSV/peliculas_limpio.csv"
@@ -19,16 +20,6 @@ def load_existing_ratings():
         ratings_df = ratings_df[ratings_df['rating'] != 0]
         return dict(zip(ratings_df['title'], ratings_df['rating']))
     return {}
-
-def update_rating(title, rating):
-    title = str(title)
-    if isinstance(rating, (int, float)):
-        st.session_state[f"rating_{title}"] = rating
-        if 'existing_ratings' not in st.session_state:
-            st.session_state.existing_ratings = {}
-        st.session_state.existing_ratings[title] = rating
-    else:
-        st.error("El valor de rating debe ser un número (int o float).")
 
 def save_ratings_to_csv():
     if os.path.exists(ratings_path):
@@ -69,7 +60,7 @@ def main():
 
     # Cargar datos
     data, tfidf_matrix = load_movie_data()
-    existing_ratings = load_existing_ratings()
+    existing_ratings = ratings.CARGAR_RATINGS()
 
     # Selección de película
     selected_movie = st.multiselect(
@@ -93,7 +84,7 @@ def main():
     else:
         st.write("Selecciona una o más películas para ver los detalles.")
 
-    save_ratings_to_csv()
+    ratings.GUARDAR_RATINGS()
 
 if __name__ == "__main__":
     main()

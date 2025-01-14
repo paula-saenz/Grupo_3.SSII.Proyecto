@@ -14,7 +14,7 @@ with open("CSV/ratings.csv", mode='w', encoding='utf-8', newline='') as csvfile:
         )):
         writer.writerow({
             'title': titulo[i],
-            'rating': 0
+            'rating': int(0)
         })
    
     

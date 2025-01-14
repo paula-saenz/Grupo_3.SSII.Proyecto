@@ -3,21 +3,25 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MinMaxScaler
+from codigos.Control_CSV import CSV
 
-def load_and_prepare_data():
-    data_df = pd.read_csv("CSV/peliculas_limpio.csv")
-    data_df_ratings = pd.read_csv("CSV/ratings.csv")
+def CARGAR_DATOS():
+    peliculas_limplio_csv = CSV.PELICULAS_LIMPIO_CSV()
+    ratings_csv = CSV.RATINGS_CSV()
+
+    peliculas_df = pd.read_csv(peliculas_limplio_csv)
+    ratings_df = pd.read_csv(ratings_csv)
     
-    df = data_df[["title", "year", "genre", "director", "writer"]]
-    df = df[df["title"].isin(data_df_ratings["title"])]
+    df = peliculas_df[["title", "year", "genre", "director", "writer"]]
+    df = df[df["title"].isin(ratings_df["title"])]
     
     df["genre"] = df["genre"].fillna("")
     df["director"] = df["director"].fillna("")
     df["writer"] = df["writer"].fillna("")
     
-    return df, data_df_ratings
+    return df, ratings_df
 
-def create_similarity_matrix(df):
+def CREAR_MATRIZ_SIMILITUD(df):
     tfidf_genre_vectorizer = TfidfVectorizer()
     tfidf_director_vectorizer = TfidfVectorizer()
     tfidf_writer_vectorizer = TfidfVectorizer()
@@ -33,15 +37,15 @@ def create_similarity_matrix(df):
     matriz_sim = cosine_similarity(matriz_caract)
     return pd.DataFrame(matriz_sim, index=df["title"], columns=df["title"])
 
-def recomendar_peliculas_top_rated(similarity_df, data_df_ratings, top_n):
-    peliculas_gustadas = data_df_ratings[data_df_ratings["rating"] >= 8]["title"].values
+def RECOMENDACION(similarity_df, data_df_ratings, top_n):
+    peliculas_gustadas = data_df_ratings[data_df_ratings["rating"] >= 7]["title"].values
     peliculas_sin_rating = data_df_ratings[data_df_ratings["rating"] == 0]["title"].values
     
     recomendaciones = []
     for peli in peliculas_gustadas:
         if peli in similarity_df.index:
-            similar_movies = similarity_df[peli].sort_values(ascending=False).iloc[1:top_n + 1]
-            peliculas_recomendadas = similar_movies[similar_movies.index.isin(peliculas_sin_rating)]
+            pelis_similares = similarity_df[peli].sort_values(ascending=False).iloc[1:top_n + 1]
+            peliculas_recomendadas = pelis_similares[pelis_similares.index.isin(peliculas_sin_rating)]
             recomendaciones.append(peliculas_recomendadas)
     
     if recomendaciones:
