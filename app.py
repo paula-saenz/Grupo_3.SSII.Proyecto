@@ -91,7 +91,6 @@ def main():
         st.session_state.recomendaciones = SISTEMA_RECOMENDACIONES(matriz_similitud_recomendaciones, ratings_df, peliculas_no_votadas, st.session_state.num_movies_perfil)
 
 
-
     # CAJA DE SELECCIÓN PARA SELECCIONAR EL NÚMERO DE PELÍCULAS
     select_box.SELECT_BOX(
         st.session_state.num_movies_perfil, 
@@ -99,11 +98,15 @@ def main():
         num_pelis.perfil.ACTUALIZAR_NUM_PELIS_PERFIL
     )
 
+    if 'previous_num_movies' not in st.session_state or st.session_state.previous_num_movies != st.session_state.num_movies_perfil:
+        st.session_state.previous_num_movies = st.session_state.num_movies_perfil
+        st.rerun()
 
-
+    num_pelis_a_mostrar = st.session_state.num_movies_perfil
+    vista.VISTA_PELICULAS(peliculas[:num_pelis_a_mostrar])
     # DETALLES FINALES
     # Vista de las películas recomendadas en una cuadrícula
-    vista.VISTA_PELICULAS(st.session_state.recomendaciones)
+    #vista.VISTA_PELICULAS(st.session_state.recomendaciones)
 
     # Guardar los ratings actualizados
     ratings.GUARDAR_RATINGS()
