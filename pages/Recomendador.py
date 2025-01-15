@@ -5,11 +5,13 @@ import os
 from codigos.Control_PLN import pln
 from codigos.Control_VISTA import num_pelis, vista, vistaPLN, select_box
 from codigos.Control_CSV import ratings, CSV
+import time
 
 
 def main():
 
     # INICIAR LA PÁGINA
+    ratings.GENERAR_RATINGS()
     st.set_page_config(layout="wide")
     st.title("Recomendador de Películas Similares")
 
@@ -22,7 +24,6 @@ def main():
 
     # Cargar datos
     data, tfidf_matrix = pln.CARGAR_DATOS(file_path, image_links_path)
-    existing_ratings = ratings.CARGAR_RATINGS()
     numero_pelis_inicio = num_pelis.galeria.CARGAR_NUM_GALERIA()
 
 
@@ -49,11 +50,7 @@ def main():
 
 
 
-    # Detección de cambio de película seleccionada
-    if selected_movie != st.session_state.current_movie:
-        st.session_state.current_movie = selected_movie
-        st.session_state.page_changed = True
-
+    # CAJA DE SELECCIÓN PARA SELECCIONAR EL NÚMERO DE PELÍCULAS
     num_recommendations = st.selectbox(
         label="Selecciona el número de películas a mostrar",
         options=[5, 10, 15, 20, 25, 30],
@@ -68,11 +65,11 @@ def main():
 
         if similar_movies:
             st.subheader(f"Películas similares a '{selected_movie}':")
-            vistaPLN.VISTA_PLN(similar_movies, existing_ratings)
+            vistaPLN.VISTA_PLN(similar_movies)
     else:
         st.write("No se encontraron películas similares.")
 
-    ratings.GUARDAR_RATINGS()
+    ratings.GUARDAR_RATINGS() # ---> ¡SI SE CAMBIA DE VENTANA MUY RÁPIDO NO GUARDA EL RATING PORQUE NO DA TIEMPO!
 
 if __name__ == "__main__":
     main()

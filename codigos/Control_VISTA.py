@@ -95,8 +95,12 @@ class num_pelis:
 
     class perfil:
         def ACTUALIZAR_NUM_PELIS_PERFIL():
+            # Guardar configuración y actualizar estado
             num_pelis.GUARDAR_CONFIGURACION("perfil", st.session_state.num_movies_select_perfil)
             st.session_state.num_movies_perfil = st.session_state.num_movies_select_perfil
+            
+            # Cambiar una variable auxiliar para forzar el redibujado
+            st.session_state.force_rerun = not st.session_state.get("force_rerun", False)
 
         def CARGAR_NUM_PERFIL():
             return num_pelis.CARGAR_CONFIGURACION("perfil", 15)

@@ -47,7 +47,6 @@ def main():
     st.set_page_config(layout="wide")
     st.title("PERFIL")
 
-
     
     # CARGAR Y PREPARAR LOS DATOS
     # Datos de Recomendaciones
@@ -66,8 +65,6 @@ def main():
     # Dato para cargar el número de películas de perfil
     default_num_movies = num_pelis.perfil.CARGAR_NUM_PERFIL()
 
-
-
     # GUARDADO DE PELÍCULAS NO VOTADAS
     # Estado para los ratings de las películas en caso de que no existe
     if 'rating_peli' not in st.session_state:
@@ -79,17 +76,15 @@ def main():
     ]   # lambda --> Defina una función corta en una sola línea   
         # .apply --> Guardará una Serie de True y Falta dependiendo de la condición de lambda (Si es true se guarda la película, si es False no se guarda)
 
-
-
     # SE INICIALIZAN LOS ESTADOS EN CASO DE QUE NO EXISTAN
     # Estado para el número de películas
     if "num_movies_perfil" not in st.session_state:
         st.session_state.num_movies_perfil = default_num_movies
 
     # Estado para el guardado de las películas recomendadas
-    if "recomendaciones" not in st.session_state or st.button("Actualizar recomendaciones"):
+    if "recomendaciones" not in st.session_state or st.session_state.force_rerun == True:
         st.session_state.recomendaciones = SISTEMA_RECOMENDACIONES(matriz_similitud_recomendaciones, ratings_df, peliculas_no_votadas, st.session_state.num_movies_perfil)
-
+        st.session_state.force_rerun = False  # Restablecer force_rerun
 
     # CAJA DE SELECCIÓN PARA SELECCIONAR EL NÚMERO DE PELÍCULAS
     select_box.SELECT_BOX(
@@ -98,20 +93,13 @@ def main():
         num_pelis.perfil.ACTUALIZAR_NUM_PELIS_PERFIL
     )
 
-    if 'previous_num_movies' not in st.session_state or st.session_state.previous_num_movies != st.session_state.num_movies_perfil:
-        st.session_state.previous_num_movies = st.session_state.num_movies_perfil
-        st.rerun()
-
-    num_pelis_a_mostrar = st.session_state.num_movies_perfil
-    vista.VISTA_PELICULAS(peliculas[:num_pelis_a_mostrar])
+    vista.VISTA_PELICULAS(st.session_state.recomendaciones)
     # DETALLES FINALES
     # Vista de las películas recomendadas en una cuadrícula
     #vista.VISTA_PELICULAS(st.session_state.recomendaciones)
 
     # Guardar los ratings actualizados
     ratings.GUARDAR_RATINGS()
-
-
 
 # LLAMADA AL "MAIN"
 if __name__ == "__main__":
