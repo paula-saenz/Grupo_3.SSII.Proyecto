@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_star_rating import st_star_rating
 import pandas as pd
 import os
-from codigos.pln_sinopsis import load_data, find_similar_movies
+from codigos.Control_PLN import pln
 from codigos.Control_VISTA import vista
 from codigos.Control_CSV import ratings, csv
 
@@ -12,7 +12,7 @@ image_links_path = "CSV/link_imagenes.csv"
 ratings_path = "CSV/ratings.csv"
 
 def load_movie_data():
-    return load_data(file_path, image_links_path)
+    return pln.CARGAR_DATOS(file_path, image_links_path)
 
 def load_existing_ratings():
     if os.path.exists(ratings_path):

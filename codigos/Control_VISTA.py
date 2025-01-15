@@ -65,6 +65,35 @@ class vista:
                         key=titulo, # La clave única será el "titulo"
                     )
 
+class vistaPLN:
+    def VISTA_PLN(movies, existing_ratings):
+        colums = 5
+        for i in range(0, len(movies), colums):
+            row = movies[i:i+colums]
+            cols = st.columns(colums)
+            for j, movie in enumerate(row):
+                with cols[j]:
+                    st.subheader(movie["title"])
+                    if pd.notna(movie["imagen"]):
+                        st.image(movie["imagen"], use_container_width=True)
+                    else:
+                        st.write("Imagen no disponible")
+
+                    st.write(f"Género: {movie['genre']}")
+                    st.write(f"Año: {movie['year']}")
+                    st.write(f"Similitud: {movie['similarity']:.2f}")
+
+                    movie_key = f"rating_{movie['title']}"
+                    if movie_key not in st.session_state:
+                        st.session_state[movie_key] = existing_ratings.get(movie['title'], 0)
+
+                    rating = st_star_rating(
+                        label="",
+                        maxValue=10,
+                        defaultValue=st.session_state[movie_key],
+                        key=movie_key,
+                    )
+
 # CREACIÓN DE LA CLASE "NUM_PELIS"
 class num_pelis:
     def GUARDAR_CONFIGURACION(tipo, valor):
@@ -130,6 +159,14 @@ class paginas_caratulas:
         with col2:
             st.write(f"Página {st.session_state.current_page} de {paginacion}")
 
-        
+class select_box:
+    def SELECT_BOX(num_pelis_state, key_peli, actualizar):
+        st.selectbox(
+            label="Selecciona el número de películas a mostrar",
+            options=[5, 10, 15, 20, 25, 30],
+            index=[i for i, x in enumerate([5, 10, 15, 20, 25, 30]) if x == num_pelis_state][0],
+            key=key_peli,
+            on_change=actualizar
+        )
 
     

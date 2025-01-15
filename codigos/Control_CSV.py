@@ -39,17 +39,26 @@ class ratings:
         return {}
     
     # CREACIÓN DE LA FUNCIÓN "GUARDAR_RATINGS"
-    def GUARDAR_RATINGS():
+    def GUARDAR_RATINGS(): # NO SÉ QUE HE TOCADO, PERO FUNCIONA. SOLO GUARDA EL VALOR ANTERIOR AL SER NULL. NO SÉ SI SE HA LIADO CON ALGO EXTRA
         ratings_CSV = CSV.RATINGS_CSV()
         ratings_df = pd.read_csv(ratings_CSV)
+
         # ITERAR SOBRE TODOS LOS VALORES DEL ESTADO
-        for key, value in st.session_state.items(): # Mira el nombre del estado ("key") y su valor asociado (value)
-            if key.startswith("rating_"): # Filtra todos los estados que comiencen por "rating_", asegurando que solo se procesen los ratings del estado y no otros datos
-                title = key.replace("rating_", "") # Elimina el prefijo "rating_" (Ejemplo: key = "rating_Peli1", entonces title = "Peli1")
+        for key, value in st.session_state.items():
+            if key.startswith("rating_"):
+                title = key.replace("rating_", "")
 
                 # ACTUALIZAR / AÑADIR CALIFICACIONES
-                if title in ratings_df["title"].values: # Si la película está en el Dataframe
-                    ratings_df.loc[ratings_df["title"] == title, "rating"] = value # Actualiza la columna "rating" con el nuevo valor
+                if title in ratings_df["title"].values:  # Si la película está en el Dataframe
+                    # Obtener el valor anterior
+                    previous_rating = ratings_df.loc[ratings_df["title"] == title, "rating"].values[0]
+
+                    # Actualizar el rating solo si no es None
+                    if value is not None:
+                        ratings_df.loc[ratings_df["title"] == title, "rating"] = value
+                    else:
+                        # Si el nuevo valor es None, restaurar el valor anterior
+                        ratings_df.loc[ratings_df["title"] == title, "rating"] = previous_rating
 
         # GUARDA LOS RATINGS EN EL CSV
         ratings_df.to_csv(ratings_CSV, index=False)
