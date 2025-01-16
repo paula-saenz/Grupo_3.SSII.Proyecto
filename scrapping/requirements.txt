@@ -1,0 +1,6 @@
+pandas
+numpy
+scikit-learn
+streamlit
+nltk
+st_star_rating

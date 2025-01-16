@@ -1,11 +1,7 @@
 import streamlit as st
-from streamlit_star_rating import st_star_rating
-import pandas as pd
-import os
 from codigos.Control_PLN import pln
-from codigos.Control_VISTA import num_pelis, vista, vistaPLN, select_box
+from codigos.Control_VISTA import num_pelis, vistaPLN
 from codigos.Control_CSV import ratings, CSV
-import time
 
 
 def main():
