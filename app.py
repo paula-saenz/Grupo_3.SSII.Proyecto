@@ -65,6 +65,7 @@ def main():
     # Dato para cargar el número de películas de perfil
     default_num_movies = num_pelis.perfil.CARGAR_NUM_PERFIL()
 
+
     # GUARDADO DE PELÍCULAS NO VOTADAS
     # Estado para los ratings de las películas en caso de que no existe
     if 'rating_peli' not in st.session_state:

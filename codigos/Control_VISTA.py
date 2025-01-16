@@ -148,7 +148,8 @@ class select_box:
 
 
 class vistaPLN:
-    def VISTA_PLN(movies, existing_ratings):
+    def VISTA_PLN(movies):
+        existing_ratings = ratings.CARGAR_RATINGS()
         colums = 5
         for i in range(0, len(movies), colums):
             row = movies[i:i+colums]
