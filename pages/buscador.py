@@ -1,7 +1,5 @@
 import streamlit as st
-from streamlit_star_rating import st_star_rating
 import pandas as pd
-import os
 from codigos.Control_PLN import pln
 from codigos.Control_VISTA import vista
 from codigos.Control_CSV import ratings, CSV
@@ -21,13 +19,14 @@ def main():
     if "current_movie" not in st.session_state:
         st.session_state.current_movie = None
 
-    # Cargar datos
-    data, tfidf_matrix = pln.CARGAR_DATOS(file_path, image_links_path)
+    peliculas = pd.read_csv(file_path)
+    link_imagenes = pd.read_csv(image_links_path)
+    peliculas = pd.merge(peliculas, link_imagenes, on="title", how="left")
 
     # Selección de película
     selected_movie = st.multiselect(
         "Selecciona una película:",
-        options=data['title'].tolist(),
+        options=peliculas['title'].tolist(),
         key="movie_search"
     )
 
@@ -37,8 +36,8 @@ def main():
         st.session_state.page_changed = True
 
     if selected_movie:
-        st.session_state.auto_random_movies = data[data['title'].isin(selected_movie)]
-        vista.VISTA_PELICULAS(st.session_state.auto_random_movies)
+        peliculas_seleccionadas = peliculas[peliculas['title'].isin(selected_movie)]
+        vista.VISTA_PELICULAS(peliculas_seleccionadas)
     else:
         st.write("Selecciona una o más películas para ver los detalles.")
 

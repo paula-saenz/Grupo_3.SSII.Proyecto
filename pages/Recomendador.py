@@ -20,7 +20,7 @@ def main():
 
     # Cargar datos
     data, tfidf_matrix = pln.CARGAR_DATOS(file_path, image_links_path)
-    numero_pelis_inicio = num_pelis.galeria.CARGAR_NUM_GALERIA()
+    numero_pelis_inicio = num_pelis.recomendador.CARGAR_NUM_RECOMENDADOR()
 
 
 

@@ -123,7 +123,7 @@ class num_pelis:
 
         
 class paginas_caratulas:
-    def PAGINAS(paginacion, on_change = None):
+    def PAGINAS(paginacion):
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             if st.button("⬅️ Anterior") and st.session_state.current_page > 1:

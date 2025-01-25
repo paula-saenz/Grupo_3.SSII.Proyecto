@@ -86,7 +86,7 @@ def main():
     if "recomendaciones" not in st.session_state or st.session_state.force_rerun == True:
         st.session_state.recomendaciones = SISTEMA_RECOMENDACIONES(matriz_similitud_recomendaciones, ratings_df, peliculas_no_votadas, st.session_state.num_movies_perfil)
         st.session_state.force_rerun = False  # Restablecer force_rerun
-
+        
     # CAJA DE SELECCIÓN PARA SELECCIONAR EL NÚMERO DE PELÍCULAS
     select_box.SELECT_BOX(
         st.session_state.num_movies_perfil, 
